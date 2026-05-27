@@ -1,0 +1,15 @@
+
+services:
+  rust:
+    image: rust:latest
+    container_name: rust-dev
+    working_dir: /app
+    volumes:
+      - .:/app
+      -  C:\Users\peter\OneDrive - University of East Anglia\Dissertation\Code\crates:/usr/local/cargo
+      - C:\Users\peter\OneDrive - University of East Anglia\Dissertation\Code\targets:/app/target
+    stdin_open: true   # equivalent to -i
+    tty: true          # equivalent to -t
+    command: bash
+    restart: "no"
+ 
