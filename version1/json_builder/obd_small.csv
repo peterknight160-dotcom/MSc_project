@@ -1,0 +1,6 @@
+epoch,altitude_value,vehicle_id,air_intake_temp_value,air_intake_temp_unit,short term fuel trim bank 1,engine_runtime,dtc_number,barometric_pressure_value,barometric_pressure_unit,engine_coolant_temp_value,engine_coolant_temp_unit,ambient_air_temp_value,ambient_air_temp_unit,intake_manifold_pressure_value,intake_manifold_pressure_unit,maf_value,maf_unit,speed_value,speed_unit,throttle_pos_value,timing_advance_value,equiv_ratio_value,fuel_level_value,engine_load_value,engine_rpm_value,engine_rpm_unit,latitude,longitude,altitude_unit
+1513362182,44,s11,33,C,-0.008,00:07:45,MIL is OFF0 codes,100,kPa,83,C,28,C,60,kPa,29,g/s,52,km/h,0.365,0.671,0.01,0.718,0.882,2226,RPM,-3.520235,-58.530674,m
+1513361900,46,s11,36,C,-0.016,00:03:02,MIL is OFF0 codes,100,kPa,82,C,28,C,61,kPa,24,g/s,48,km/h,0.349,0.667,0.01,0.745,0.792,2124,RPM,-3.520429,-58.321307,m
+1513361904,52,s11,36,C,-0.047,00:03:08,MIL is OFF0 codes,100,kPa,83,C,28,C,44,kPa,30,g/s,60,km/h,0.361,0.682,0.01,0.741,0.784,2617,RPM,-3.52038,-58.323103,m
+1513361913,45,s11,36,C,0,00:03:16,MIL is OFF0 codes,100,kPa,82,C,28,C,63,kPa,18,g/s,65,km/h,0.325,0.753,0.01,0.737,0.373,3156,RPM,-3.52027,-58.328462,m
+1513361941,34,s11,36,C,0.039,00:03:44,MIL is OFF0 codes,100,kPa,82,C,28,C,31,kPa,10,g/s,68,km/h,0.286,0.729,0.01,0.718,0.38,1859,RPM,-3.519911,-58.356454,m
