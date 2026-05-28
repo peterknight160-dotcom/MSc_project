@@ -1,5 +1,8 @@
-use std::f16::consts::EULER_GAMMA;
+
+
 use std::fs::File;
+
+
 use std::io::{BufReader, BufRead};
 use std::collections::BTreeMap;
 use std::collections::HashMap;
@@ -63,29 +66,50 @@ pub fn file_to_json(filename: &str) -> String {
     */
  fn hashmap_to_json ( hash: BTreeMap<String, String>) -> String {
     
-    let mut result= String::from("{ ");
-    for (key,value ) in hash.iter() {
+    let mut result= String::from("{\n");
+    let mut first_element: bool = true;
+    let mut hash_iter = hash.iter() ;
+
+    while let Some ((key, value)) = hash_iter.next()  {
+    
         let value_is_text  =! value.parse::<f64> ().is_ok();
+         match first_element {
+                true => { first_element = false}, 
+                false => { result = result + ",\n"}
+
+            }
         if key.ends_with("_unit") {
-            // 
-            println!("Key is {}, Ignore for now",key);
+            let mut element: String=  "\"".to_owned()  + key.strip_suffix("_unit").unwrap_or(key) + "\": {\n";
+            element = element+  "     \"unit\": \"" + &value + "\",\n";
+            if let Some ((_, value1 )) = hash_iter.next() {
+       
+               element = element +   "     \"value\": " + value1 + "\n}";
+            }
+            result += &element; 
+
 
         }
         else {
+            // Regular element
+           
             let quote = String::from ("\"");
             let mut element = quote + key + "\": ";
             if value_is_text {
-                element = element + String::from ("\"") + value + "\"";
+                element = element + "\"" + value + "\"" ;
             }
             else {
-                element = 
+                element = element + value 
             }
+            result.push_str(&element);
             
         }
+   
+
 
     }
+    result += "\n}";
 
-
+    println!("JSON String is {}", result);
 
     String::new ()
  }
