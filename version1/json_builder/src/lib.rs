@@ -79,11 +79,11 @@ pub fn file_to_json(filename: &str) -> String {
 
             }
         if key.ends_with("_unit") {
-            let mut element: String=  "\"".to_owned()  + key.strip_suffix("_unit").unwrap_or(key) + "\": {\n";
-            element = element+  "     \"unit\": \"" + &value + "\",\n";
+            let mut element: String=  "    \"".to_owned()  + key.strip_suffix("_unit").unwrap_or(key) + "\": {\n";
+            element = element+  "        \"unit\": \"" + &value + "\",\n";
             if let Some ((_, value1 )) = hash_iter.next() {
        
-               element = element +   "     \"value\": " + value1 + "\n}";
+               element = element +   "        \"value\": " + value1 + "\n    }";
             }
             result += &element; 
 
@@ -92,7 +92,7 @@ pub fn file_to_json(filename: &str) -> String {
         else {
             // Regular element
            
-            let quote = String::from ("\"");
+            let quote = String::from ("    \"");
             let mut element = quote + key + "\": ";
             if value_is_text {
                 element = element + "\"" + value + "\"" ;
