@@ -2,6 +2,7 @@
 
 use fips204::ml_dsa_44; // Could also be ml_dsa_44 or ml_dsa_44. 
 use fips204::traits::{SerDes, Signer, Verifier};
+use std::time::Instant;
 
 fn check_fips204 (message: &[u8] ) -> Option <bool> {
 
@@ -9,12 +10,16 @@ fn check_fips204 (message: &[u8] ) -> Option <bool> {
 
 // Generate key pair and signature
 
+let start = Instant::now();
+
 
 let Some((pk1, sk)) = ml_dsa_44::try_keygen().ok() else { panic!("At line 7")};  // Generate both public and secret keys
-
+let step1 =start.elapsed();
+println!("Generating keys took {:.2?}", step1) ;
 
 let sig = sk.try_sign(&message, &[]).ok();  // Use the secret key to generate a message signature
-  println!( "Sig is {:?}", sig);
+let step2 =start.elapsed();
+println!("Generating keys took {:.2?}", step2) ;
 // Serialize then send the public key, message and signature
 let (pk_send, msg_send, sig_send) = (pk1.into_bytes(), message, sig);
 
