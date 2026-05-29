@@ -1,7 +1,7 @@
 
 
 use std::fs::File;
-
+use std::time::{ SystemTime, UNIX_EPOCH};
 
 use std::io::{BufReader, BufRead};
 use std::collections::BTreeMap;
@@ -44,8 +44,8 @@ pub fn file_to_json(filename: &str) -> String {
         
     }   
     for x in data.iter() {
-        println! (" row is {:?}\n", x);
-        hashmap_to_json(x.clone());
+   
+        hashmap_to_json_set_epoch(x.clone());
     }
     //println !("{:?}", data);     
     String::new()
@@ -64,7 +64,7 @@ pub fn file_to_json(filename: &str) -> String {
     "longitude": -58.321307,
     
     */
- fn hashmap_to_json ( hash: BTreeMap<String, String>) -> String {
+ fn hashmap_to_json_set_epoch ( hash: BTreeMap<String, String>) -> String {
     
     let mut result= String::from("{\n");
     let mut first_element: bool = true;
@@ -91,14 +91,17 @@ pub fn file_to_json(filename: &str) -> String {
         }
         else {
             // Regular element
+            // Handle default values
+            let use_value = set_default_value(key, &value);
+
            
             let quote = String::from ("    \"");
             let mut element = quote + key + "\": ";
             if value_is_text {
-                element = element + "\"" + value + "\"" ;
+                element = element + "\"" + &use_value + "\"" ;
             }
             else {
-                element = element + value 
+                element = element + &use_value 
             }
             result.push_str(&element);
             
@@ -112,6 +115,17 @@ pub fn file_to_json(filename: &str) -> String {
     println!("JSON String is {}", result);
 
     String::new ()
+ }
+
+ fn set_default_value ( key: &String,value: &String ) -> String{
+    // Code to handle default values - mostly epoch
+    let mut return_val = value.to_string();
+    if key == "epoch" && value == "XXXX" {
+        return_val= SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs().to_string();
+        
+        println!("Not now Joshepine");
+    }
+    return_val
  }
     
 

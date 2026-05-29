@@ -1,0 +1,6 @@
+[package]
+name = "json_build_epoch"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
