@@ -9,7 +9,11 @@ fn check_fips204 (message: &[u8] ) -> Option <bool> {
    
 
 // Generate key pair and signature
-
+for (_) in 0..1000{ 
+let start2 = Instant::now();
+let quick = start2.elapsed();
+println!(" That was quick {:.2?}", quick);
+}
 let start = Instant::now();
 
 
