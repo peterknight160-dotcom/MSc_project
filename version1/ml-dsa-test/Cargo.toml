@@ -1,9 +1,7 @@
 [package]
-name = "fips204_test"
+name = "ml-dsa-test"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-fips204 = "0.4.6"
-
-[profile.release]
+ml-dsa = "0.1.1"

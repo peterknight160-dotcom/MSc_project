@@ -20,6 +20,7 @@ let signing_key: SigningKey = SigningKey::generate(&mut csprng);
 println!( "Generated signing key: {:?}", signing_key.to_bytes());
 
 let start = Instant::now();
+let start_timer = read_timer();
 let mut dump = Vec::new();  
 for _ in 0..iterations {
    
@@ -27,8 +28,11 @@ let signature: Signature = signing_key.sign(message);
 dump.push(signature.to_bytes()[2]);  
 }
 let step2 =start.elapsed();
+let end_timer = read_timer();
 println!("Generating signature took {:.2?} in total", step2) ;
 println!("Generating signature took {:.2?} per signature", step2 / iterations as u32) ;
+    println!("Timer difference: {}", end_timer - start_timer);
+    println!("Timer difference per signature: {}", (end_timer - start_timer) as f64 / iterations as f64);
 
 
 }
@@ -51,3 +55,36 @@ fn main() {
 }
 
 
+mod imp {
+    #[cfg(target_arch = "x86_64")]
+    pub fn read() -> u64 {
+        let t: u64;
+        unsafe {
+            core::arch::asm!(
+                "rdtscp",
+                "shl rdx, 32",
+                "or rax, rdx",
+                out("rax") t,
+                out("rdx") _,
+            );
+        }
+        t
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    pub fn read() -> u64 {
+        let t: u64;
+        unsafe {
+            core::arch::asm!(
+                "isb",
+                "mrs {0}, cntvct_el0",
+                out(reg) t,
+            );
+        }
+        t
+    }
+}
+
+pub fn read_timer() -> u64 {
+    imp::read()
+}

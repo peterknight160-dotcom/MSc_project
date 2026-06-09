@@ -1,20 +1,23 @@
-use fips204::ml_dsa_44; // Could also be ml_dsa_44 or ml_dsa_44.
-use fips204::traits::{SerDes, Signer, Verifier};
+use ml_dsa::{MlDsa44, Generate, Keypair, SigningKey, Signer, Verifier};
 use std::time::Instant;
 
-fn check_fips204(message: &[u8], iterations: usize) -> Option<bool> {
+fn check_fips204(message: &[u8], iterations: usize) {
     println!("Message length: {:?}", message.len());
 
     // Generate key pair and signature
+let sk = SigningKey::<MlDsa44>::generate();
+let vk = sk.verifying_key();
 
-    let Some((pk1, sk)) = ml_dsa_44::try_keygen().ok() else {
-        panic!("At line 7")
-    }; // Generate both public and secret keys
+
+
+    //Generate both public and secret keys
 
     let start_keygen = Instant::now();
     let start_keygen_cycle = read_timer();
     for _ in 0..iterations {
-        let _ = ml_dsa_44::try_keygen().ok();
+        let sk = SigningKey::<MlDsa44>::generate();
+    let _vk = sk.verifying_key();
+
     }
     let end_keygen_cycle = read_timer();
     let step0 = start_keygen.elapsed();
@@ -36,8 +39,7 @@ fn check_fips204(message: &[u8], iterations: usize) -> Option<bool> {
     // let mut dump = Vec::new();
     let start_sign_cycle = read_timer();
     for _ in 0..iterations {
-        let _: Option<[u8; 2420]> = sk.try_sign(&message, &[]).ok(); // Use the secret key to generate a message signature
-        //dump.push(sig.unwrap()[0]);
+    let _ = sk.sign(message);
     }
     let step2 = start_sign.elapsed();
     println!("Generating signature took {:.2?} in total", step2);
@@ -54,21 +56,12 @@ fn check_fips204(message: &[u8], iterations: usize) -> Option<bool> {
         "Generating signature took {} cycles per signature",
         (end_sign_cycle - start_sign_cycle) / iterations as u64
     );
-    let sig = sk.try_sign(&message, &[]).ok();
-    // Serialize then send the public key, message and signature
-    let (pk_send, msg_send, sig_send) = (pk1.into_bytes(), message, sig);
-
-    let (pk_recv, msg_recv) = (pk_send, msg_send);
-    let sig_recv = sig_send.unwrap();
-
-    // Deserialize the public key and signature, then verify the message
-    let pk2 = ml_dsa_44::PublicKey::try_from_bytes(pk_recv).ok();
-
+    let sig = sk.sign(message);
+    
     let start_verify = Instant::now();
     let start_verify_cycle = read_timer();
     for _ in 0..iterations {
-          let pk2 = ml_dsa_44::PublicKey::try_from_bytes(pk_recv).ok();
-        let _ = pk2?.verify(&msg_recv, &sig_recv, &[]); // Use the public to verify message signature
+        let _ = vk.verify(message, &sig);
     }
     let step3 = start_verify.elapsed();
     println!("Verifying signature took {:.2?} in total", step3);
@@ -85,9 +78,9 @@ fn check_fips204(message: &[u8], iterations: usize) -> Option<bool> {
         "Verifying signature took {} cycles per signature",
         (end_verify_cycle - start_verify_cycle) / iterations as u64
     );
-    let v = pk2?.verify(&msg_recv, &sig_recv, &[]); // Use the public to verify message signature
-    Some(v)
-}
+    let _v = vk.verify(message, &sig); // Use the public to verify message signature
+  
+    }
 
 fn main() {
     // Read message from file json.txt
@@ -100,9 +93,8 @@ fn main() {
         .expect("Failed to read line");
     let iterations: usize = input.trim().parse().expect("Please enter a number");
 
-    if check_fips204(&message, iterations).unwrap() {
-        println!("Validation is good");
-    }
+     check_fips204(&message, iterations);
+    
 }
 
 mod imp {
