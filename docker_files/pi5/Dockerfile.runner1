@@ -1,0 +1,11 @@
+#  Docker file file for Runner1
+FROM debian:stable-slim
+
+# Create user with UID 1000
+RUN useradd -m -u 1000 appuser
+
+WORKDIR /shared
+
+USER appuser
+
+CMD ["bash"]

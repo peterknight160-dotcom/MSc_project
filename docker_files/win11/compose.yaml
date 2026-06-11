@@ -1,0 +1,63 @@
+services:
+  rust_builder:
+    build:
+      context: .
+      dockerfile: Dockerfile.builder
+    container_name: rust_builder
+    user: "1000:1000"
+    stdin_open: true     # equivalent to -it
+    tty: true            # equivalent to -it
+    working_dir: /workspace
+    volumes:
+      - rust_shared:/shared
+      - "C:/Users/Peter/dissertation/code/builds:/workspace"
+    environment:
+      - CARGO_TARGET_DIR=/shared
+    command: bash
+
+
+  runner1:
+    build:
+      context: .
+      dockerfile: Dockerfile.runner1
+    container_name: runner1
+    volumes:
+      - rust_shared:/shared
+    stdin_open: true
+    tty: true
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 128M
+          
+  runner2:
+    build:
+      context: .
+      dockerfile: Dockerfile.runner2
+    container_name: runner2  
+    volumes:
+      - rust_shared:/shared
+    stdin_open: true
+    tty: true
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 128M   
+          
+  superroot:
+    image: debian:latest
+    container_name: superroot
+    stdin_open: true # equivalent to -it
+    tty: true # equivalent to -it
+    working_dir: /workspace
+    volumes:
+      - rust_shared:/shared
+      - C:/Users/Peter/MSc_project:/workspace
+    command: bash
+
+volumes:
+  rust_shared:
+
+      

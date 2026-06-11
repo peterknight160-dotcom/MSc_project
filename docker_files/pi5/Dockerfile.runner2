@@ -1,0 +1,11 @@
+#  Docker file file for Runner1
+FROM busybox:latest
+
+# Create user with UID 1000
+RUN addgroup -g 1000 appuser
+RUN adduser -D -u 1000 -G appuser -h /shared appuser
+
+WORKDIR /shared
+
+USER appuser
+
