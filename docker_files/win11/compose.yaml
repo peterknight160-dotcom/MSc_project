@@ -28,7 +28,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1"
+          cpus: 1
           memory: 128M
           
   runner2:
@@ -43,7 +43,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "2"
+          cpus: 2
           memory: 128M   
           
   superroot:
