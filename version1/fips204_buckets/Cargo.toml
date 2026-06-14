@@ -1,10 +1,11 @@
 [package]
-name = "fips204_test"
+name = "fips204_buckets"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 env = "1.0.1"
 fips204 = "0.4.6"
+useful_stats = { path = "../useful_stats" }
 
 [profile.release]
