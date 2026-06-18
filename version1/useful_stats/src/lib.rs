@@ -14,8 +14,8 @@ pub struct  StatsResult {
 
 impl Display for StatsResult {
     fn fmt (&self, f: &mut Formatter ) -> fmt::Result {
-        let _ = writeln! ( f, "For {} , elements = {}  mean = {:.2} std_dev = {:.2}", self.legend, self.elements, self.mean , self.std_dev);
-        writeln!(f, "Minimum = {} ,  maximum = {} , 90th percentile = {}   99th percentile ={} ", self.minimum, self.maximum, self.ninety_pct, self.ninety_nine_pct)
+        let _ = write! ( f, "For {}:: elements: {}  mean: {:.2} std_dev: {:.2}", self.legend, self.elements, self.mean , self.std_dev);
+        writeln!(f, " Minimum: {} ,  maximum: {} , 90th percentile: {}   99th percentile: {} ", self.minimum, self.maximum, self.ninety_pct, self.ninety_nine_pct)
     }
 }
 
