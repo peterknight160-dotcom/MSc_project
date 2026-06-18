@@ -1,4 +1,5 @@
 use core::f64;
+use std::char;
 use std::fmt::{self, Display, Formatter};
 use std::collections::BTreeMap;
 pub struct  StatsResult {
@@ -86,3 +87,44 @@ pub fn stats_from_btree ( input:BTreeMap<u128, u32>, legend: &str ) -> StatsResu
 }
 
 
+use plotters::prelude::*;
+
+pub fn draw_histogram_from_btree(input:& BTreeMap<u128, u32>, legend: &str) -> Result<(), Box<dyn std::error::Error>> {
+
+    let chart_name = format!("C:\\Users\\peter\\dissertation\\code\\graphs\\hist_{}.png", legend);
+    let root = BitMapBackend::new(&chart_name, (640, 480)).into_drawing_area();
+    root.fill(&WHITE)?;
+
+    
+
+
+
+    // Convert BTreeMap to Vec<(u128, u32)>
+    let data: Vec<(u128, u32)> = input.iter().map(|(&k, &v)| (k, v)).collect();
+    // Get x and y ranges for the chart
+    let x_range = data.iter().map(|(x, _)| *x).collect::<Vec<u128>>();
+    let y_range = data.iter().map(|(_, y)| *y).collect::<Vec<u32>>();
+    let x_min =0;
+    let x_max = *x_range.iter().max().unwrap_or(&0);
+    let y_min = 0;
+    let y_max = *y_range.iter().max().unwrap_or(&0);
+    
+
+let mut chart = ChartBuilder::on(&root)
+        .caption(legend, ("sans-serif", 30))
+        .margin(20)
+        .x_label_area_size(30)
+        .y_label_area_size(40)
+        .build_cartesian_2d(x_min..x_max, y_min..y_max)?;
+
+
+    chart.configure_mesh().draw()?;
+
+    chart.draw_series(
+        data.iter().map(|(x, y)|
+            Rectangle::new([(*x - 2, 0), (*x + 2, *y)], BLUE.filled())
+        )
+    )?;
+
+    Ok(())
+}

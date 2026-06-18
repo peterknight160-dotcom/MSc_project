@@ -24,11 +24,12 @@ fn check_fips204(message: &[u8], nkeys: u32, nloops: u32) -> Option<bool> {
             *sign_time_hash.entry(sign_time).or_insert(0) += 1;
         }
     }
-
+    let _= draw_histogram_from_btree(& key_time_hash, "ML_DSA_44 Keys Generation");
     println!(
         "Stats {} ",
         stats_from_btree(key_time_hash, "ML_DSA_44 Keys Generation")
     );
+let _= draw_histogram_from_btree(& sign_time_hash, "ML_DSA_44 Message Signing");
     println!(
         "Stats {} ",
         stats_from_btree(sign_time_hash, "ML_DSA_44 Message Signing")
