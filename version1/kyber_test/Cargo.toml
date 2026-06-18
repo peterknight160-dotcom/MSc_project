@@ -1,0 +1,9 @@
+[package]
+name = "kyber_test"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+base64-ng = "1.0.8"
+lattice-kyber = "0.1.2"
+base65 = { path = "../base65" }
