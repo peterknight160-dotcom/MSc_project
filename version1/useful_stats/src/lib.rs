@@ -5,17 +5,19 @@ pub struct  StatsResult {
     legend: String  ,
     elements: u32 , // Number of elements found
     minimum: u128, // Smallest element
-    maximum: u128, // Smallest element
+    maximum: u128, // Largest element
     mean:  f64 ,
     std_dev: f64,
-    ninety_pct: u128,
-    ninety_nine_pct: u128
+    percentiles: [u32; 15], // Percentiles to calculate
 }
+
+const PERCENTILE_TO_CALC: [u32; 15] = [1,2,5,10,20,30,40,50,60,70,80,90, 95,98, 99];
+
 
 impl Display for StatsResult {
     fn fmt (&self, f: &mut Formatter ) -> fmt::Result {
         let _ = write! ( f, "For {}:: elements: {}  mean: {:.2} std_dev: {:.2}", self.legend, self.elements, self.mean , self.std_dev);
-        writeln!(f, " Minimum: {} ,  maximum: {} , 90th percentile: {}   99th percentile: {} ", self.minimum, self.maximum, self.ninety_pct, self.ninety_nine_pct)
+        writeln!(f, " Minimum: {} ,  maximum: {} ,  percentiles: {:?}    ", self.minimum, self.maximum, self.percentiles)
     }
 }
 
@@ -46,29 +48,22 @@ pub fn stats_from_btree ( input:BTreeMap<u128, u32>, legend: &str ) -> StatsResu
     let meanloop = (  x as f64)/( elements as f64);
  
   
-    // Calculate std deviation, 90 & 99 Percentiles
+    // Calculate std deviation, percentiles, etc
     let mut sumsquares:f64 = 0.0;
-    let ninety = (elements *  90 ) /100 ;
-    let ninetynine = (elements *  99 ) /100;
-    let mut elements_so_far : u32 = 0 ;
-    let mut  ninety_pct = 0 ;
-    let mut ninetynine_pct = 0 ;
-
+   
+    let mut elements_so_far : f64 = 0.0 ;
+    let mut percentiles: [u32; 15] = [0; 15];
     for val in input.keys(){
         let value= *val as f64;
         let freq = *input.get(&val).unwrap() ;
         sumsquares += (value - meanloop)*( value  - meanloop) * freq as f64  ;
-        elements_so_far += freq ;
-        if elements_so_far >=  ninety && ninety_pct == 0 {
-            ninety_pct= *val
-            
-            ;
-
+        elements_so_far += freq as f64 ;
+        for (i, p) in PERCENTILE_TO_CALC.iter().enumerate() {
+            if elements_so_far as f64 >= *p as f64 * elements as f64 / 100.0 && percentiles[i] == 0 {
+                percentiles[i] = *val as u32;
+            }
         }
-        if elements_so_far >=  ninetynine && ninetynine_pct == 0 {
-            ninetynine_pct= *val;
-            
-        }
+        
     }    
   
     let std_dev = (sumsquares / elements as f64).sqrt();    
@@ -83,8 +78,7 @@ pub fn stats_from_btree ( input:BTreeMap<u128, u32>, legend: &str ) -> StatsResu
         maximum: max,
         mean: meanloop,
         std_dev: std_dev,
-        ninety_pct: ninety_pct , 
-        ninety_nine_pct: ninetynine_pct 
+        percentiles: percentiles
     }
     
 
