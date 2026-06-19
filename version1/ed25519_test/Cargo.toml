@@ -1,0 +1,12 @@
+[package]
+name = "ed25519_test"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+rand ={ version = "0.8", features = ["std"] }
+
+useful_stats = { path = "../useful_stats" }
+env = "1.0.1"
