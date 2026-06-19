@@ -1,15 +1,15 @@
 use core::f64;
-use std::char;
+
 use std::fmt::{self, Display, Formatter};
 use std::collections::BTreeMap;
 pub struct  StatsResult {
-    legend: String  ,
-    elements: u32 , // Number of elements found
-    minimum: u128, // Smallest element
-    maximum: u128, // Largest element
-    mean:  f64 ,
-    std_dev: f64,
-    percentiles: [u32; 15], // Percentiles to calculate
+    pub legend: String  ,
+    pub elements: u32 , // Number of elements found
+    pub minimum: u128, // Smallest element
+    pub maximum: u128, // Largest element
+    pub mean:  f64 ,
+    pub std_dev: f64,
+    pub percentiles: [u32; 15], // Percentiles to calculate
 }
 
 const PERCENTILE_TO_CALC: [u32; 15] = [1,2,5,10,20,30,40,50,60,70,80,90, 95,98, 99];
@@ -24,7 +24,7 @@ impl Display for StatsResult {
 
 
 
-pub fn stats_from_btree ( input:BTreeMap<u128, u32>, legend: &str ) -> StatsResult {
+pub fn stats_from_btree ( input:&BTreeMap<u128, u32>, legend: &str ) -> StatsResult {
  // Calculate the mean from the hash
     let mut x: u128 = 0;
     let mut elements: u32 = 0 ;
@@ -89,9 +89,9 @@ pub fn stats_from_btree ( input:BTreeMap<u128, u32>, legend: &str ) -> StatsResu
 
 use plotters::prelude::*;
 
-pub fn draw_histogram_from_btree(input:& BTreeMap<u128, u32>, legend: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub fn draw_histogram_from_btree(input:& BTreeMap<u128, u32>, legend: &str, twosigma: f64) -> Result<(), Box<dyn std::error::Error>> {
 
-    let chart_name = format!("C:\\Users\\peter\\dissertation\\code\\graphs\\hist_{}.png", legend);
+    let chart_name = format!("hist_{}.png", legend);
     let root = BitMapBackend::new(&chart_name, (640, 480)).into_drawing_area();
     root.fill(&WHITE)?;
 
@@ -102,10 +102,10 @@ pub fn draw_histogram_from_btree(input:& BTreeMap<u128, u32>, legend: &str) -> R
     // Convert BTreeMap to Vec<(u128, u32)>
     let data: Vec<(u128, u32)> = input.iter().map(|(&k, &v)| (k, v)).collect();
     // Get x and y ranges for the chart
-    let x_range = data.iter().map(|(x, _)| *x).collect::<Vec<u128>>();
+ //   let x_range = data.iter().map(|(x, _)| *x).collect::<Vec<u128>>();
     let y_range = data.iter().map(|(_, y)| *y).collect::<Vec<u32>>();
     let x_min =0;
-    let x_max = *x_range.iter().max().unwrap_or(&0);
+    let x_max = twosigma as u128;
     let y_min = 0;
     let y_max = *y_range.iter().max().unwrap_or(&0);
     
