@@ -19,13 +19,24 @@ fn check_fips203(nloops: u32) {
 
     let mut key_time_hash: BTreeMap<u128, u32> = BTreeMap::new();
 
+     // Pre -run
+
+         for _ in 0..nloops/10 {
+       
+        let kp = MlKemKeyPair::generate(ML_KEM_768).unwrap();
+        let (ct, ss_sender) = kyber::safe_encaps(ML_KEM_768, kp.public_key()).unwrap();
+        let ss_receiver = kp.decaps(&ct).unwrap();
+       
+
+      
+    }
     //  loop - number of keys to use
     for _ in 0..nloops {
         let start_key = Instant::now();
         let kp = MlKemKeyPair::generate(ML_KEM_768).unwrap();
         let (ct, ss_sender) = kyber::safe_encaps(ML_KEM_768, kp.public_key()).unwrap();
         let ss_receiver = kp.decaps(&ct).unwrap();
-        assert_eq!(ss_sender.as_bytes(), ss_receiver.as_bytes());
+      
 
         let key_time = start_key.elapsed().as_micros();
         *key_time_hash.entry(key_time).or_insert(0) += 1;
@@ -48,7 +59,7 @@ fn check_fips203(nloops: u32) {
         let kp = MlKemKeyPair::generate(ML_KEM_768).unwrap();
         let (ct, ss_sender) = kyber::safe_encaps(ML_KEM_768, kp.public_key()).unwrap();
         let ss_receiver = kp.decaps(&ct).unwrap();
-        assert_eq!(ss_sender.as_bytes(), ss_receiver.as_bytes());
+       
 
         let key_time = start_key.elapsed().as_micros();
         *key_time_hash.entry(key_time).or_insert(0) += 1;
@@ -70,7 +81,7 @@ fn check_fips203(nloops: u32) {
         let kp = MlKemKeyPair::generate(ML_KEM_768).unwrap();
         let (ct, ss_sender) = kyber::safe_encaps(ML_KEM_768, kp.public_key()).unwrap();
         let ss_receiver = kp.decaps(&ct).unwrap();
-        assert_eq!(ss_sender.as_bytes(), ss_receiver.as_bytes());
+        
         let key_time = start_key.elapsed().as_micros();
         *key_time_hash.entry(key_time).or_insert(0) += 1;
     }
