@@ -1,0 +1,18 @@
+[package]
+name = "ml_kem_combined_test"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+
+getrandom = ["kem/getrandom"]
+
+[dependencies]
+ml-kem = "0.3.2"
+useful_stats = { path = "../useful_stats" }
+env = "1.0.1"
+
+
+kem = "0.3"
+rand_core = "0.10" 
+rand = "0.10"
