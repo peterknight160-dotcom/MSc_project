@@ -1,0 +1,9 @@
+[package]
+name = "rusty_lightsaber_speed"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+env = "1.0.1"
+rusty-saber = { version = "1.0", features = ["lightsaber"] }
+useful_stats_plain = { path = "../useful_stats_plain"}
