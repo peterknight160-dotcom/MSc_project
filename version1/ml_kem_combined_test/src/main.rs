@@ -55,7 +55,7 @@ fn check_fips203( nloops: u32)  {
     
     let stats512 = stats_from_btree(&key_time_hash, "ML_KEM_512 Keys Swap");
     // Get mean + 2 std devs
-    let twosigma = stats512.mean + 2.0 * stats512.std_dev;
+    let twosigma = stats512.mean * 1.25;
 
     let _ = draw_histogram_from_btree(&key_time_hash, "ML_KEM_512_Keys_Swap", twosigma);
     println!(        "Stats {} ",stats512           );
@@ -80,7 +80,7 @@ fn check_fips203( nloops: u32)  {
     
     let stats768 = stats_from_btree(&key_time_hash, "ML_KEM_768 Keys Swap");
     // Get mean + 2 std devs
-    let twosigma = stats768.mean + 2.0 * stats768.std_dev;
+    let twosigma = stats768.mean *1.25;
 
     let _ = draw_histogram_from_btree(&key_time_hash, "ML_KEM_768_Keys_Swap", twosigma);
     println!(        "Stats {} ",stats768           );
@@ -105,7 +105,7 @@ fn check_fips203( nloops: u32)  {
     
     let stats1024 = stats_from_btree(&key_time_hash, "ML_KEM_1024 Keys Swap");
     // Get mean + 2 std devs
-    let twosigma = stats1024.mean + 2.0 * stats1024.std_dev;
+    let twosigma = stats1024.mean *1.25;
 
     let _ = draw_histogram_from_btree(&key_time_hash, "ML_KEM_1024_Keys_Swap", twosigma);
     println!(        "Stats {} ",stats1024           );
