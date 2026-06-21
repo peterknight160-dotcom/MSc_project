@@ -9,7 +9,7 @@ assert_eq!(ss_sender.as_bytes(), ss_receiver.as_bytes());
 
 */
 
-use kyber::{ML_KEM_768, MlKemKeyPair};
+use kyber::{ML_KEM_512, ML_KEM_768, ML_KEM_1024,MlKemKeyPair};
 
 use std::collections::BTreeMap;
 use std::time::Instant;
@@ -23,8 +23,8 @@ fn check_fips203(nloops: u32) {
 
          for _ in 0..nloops/10 {
        
-        let kp = MlKemKeyPair::generate(ML_KEM_768).unwrap();
-        let (ct, ss_sender) = kyber::safe_encaps(ML_KEM_768, kp.public_key()).unwrap();
+        let kp = MlKemKeyPair::generate(ML_KEM_512).unwrap();
+        let (ct, ss_sender) = kyber::safe_encaps(ML_KEM_512, kp.public_key()).unwrap();
         let ss_receiver = kp.decaps(&ct).unwrap();
        
 
@@ -33,8 +33,8 @@ fn check_fips203(nloops: u32) {
     //  loop - number of keys to use
     for _ in 0..nloops {
         let start_key = Instant::now();
-        let kp = MlKemKeyPair::generate(ML_KEM_768).unwrap();
-        let (ct, ss_sender) = kyber::safe_encaps(ML_KEM_768, kp.public_key()).unwrap();
+        let kp = MlKemKeyPair::generate(ML_KEM_512).unwrap();
+        let (ct, ss_sender) = kyber::safe_encaps(ML_KEM_512, kp.public_key()).unwrap();
         let ss_receiver = kp.decaps(&ct).unwrap();
       
 
@@ -78,8 +78,8 @@ fn check_fips203(nloops: u32) {
     //  loop - number of keys to use
     for _ in 0..nloops {
         let start_key = Instant::now();
-        let kp = MlKemKeyPair::generate(ML_KEM_768).unwrap();
-        let (ct, ss_sender) = kyber::safe_encaps(ML_KEM_768, kp.public_key()).unwrap();
+        let kp = MlKemKeyPair::generate(ML_KEM_1024).unwrap();
+        let (ct, ss_sender) = kyber::safe_encaps(ML_KEM_1024, kp.public_key()).unwrap();
         let ss_receiver = kp.decaps(&ct).unwrap();
         
         let key_time = start_key.elapsed().as_micros();
