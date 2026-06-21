@@ -19,11 +19,11 @@ let k_recv = dk.decapsulate(&ct);
 
 
 use ml_kem::{
-    MlKem768,
+    MlKem512,MlKem768, MlKem1024,
     kem::{Decapsulate, Encapsulate, Kem}
 };
 
-use rand::prelude::*;
+
 
 
 
@@ -31,17 +31,47 @@ use std::collections::BTreeMap;
 use std::time::Instant;
 use useful_stats::*;
 fn check_fips203( nloops: u32)  {
-    let seed = [ 42u8;32]; 
+
        let mut rng = rand::rng();
+
+
+       // 512
+
+
     let mut key_time_hash: BTreeMap<u128, u32> = BTreeMap::new();
    
 
     //  loop - number of keys to use
         for _ in 0..nloops {
         let start_key = Instant::now();
+        let (dk, ek) = MlKem512::generate_keypair_from_rng(&mut rng);
+        let (ct, _k_send) = ek.encapsulate_with_rng(&mut rng);  
+        let _k_recv = dk.decapsulate(&ct);
+  
+        let key_time = start_key.elapsed().as_micros();
+        *key_time_hash.entry(key_time).or_insert(0) += 1;
+  
+        }
+    
+    let stats512 = stats_from_btree(&key_time_hash, "ML_KEM_512 Keys Swap");
+    // Get mean + 2 std devs
+    let twosigma = stats512.mean + 2.0 * stats512.std_dev;
+
+    let _ = draw_histogram_from_btree(&key_time_hash, "ML_KEM_512_Keys_Swap", twosigma);
+    println!(        "Stats {} ",stats512           );
+
+
+    // 768
+
+ let mut key_time_hash: BTreeMap<u128, u32> = BTreeMap::new();
+   
+
+    //  loop - number of keys to use
+        for _ in 0..nloops {
+        let start_key = Instant::now();
         let (dk, ek) = MlKem768::generate_keypair_from_rng(&mut rng);
-        let (ct, k_send) = ek.encapsulate_with_rng(&mut rng);  
-        let k_recv = dk.decapsulate(&ct);
+        let (ct, _k_send) = ek.encapsulate_with_rng(&mut rng);  
+        let _k_recv = dk.decapsulate(&ct);
   
         let key_time = start_key.elapsed().as_micros();
         *key_time_hash.entry(key_time).or_insert(0) += 1;
@@ -52,12 +82,33 @@ fn check_fips203( nloops: u32)  {
     // Get mean + 2 std devs
     let twosigma = stats768.mean + 2.0 * stats768.std_dev;
 
-    let _ = draw_histogram_from_btree(&key_time_hash, "ML_DSA_768KeysSwap", twosigma);
+    let _ = draw_histogram_from_btree(&key_time_hash, "ML_KEM_768_Keys_Swap", twosigma);
     println!(        "Stats {} ",stats768           );
 
 
 
+    //1024
+ let mut key_time_hash: BTreeMap<u128, u32> = BTreeMap::new();
+   
+
+    //  loop - number of keys to use
+        for _ in 0..nloops {
+        let start_key = Instant::now();
+        let (dk, ek) = MlKem1024::generate_keypair_from_rng(&mut rng);
+        let (ct, _k_send) = ek.encapsulate_with_rng(&mut rng);  
+        let _k_recv = dk.decapsulate(&ct);
+  
+        let key_time = start_key.elapsed().as_micros();
+        *key_time_hash.entry(key_time).or_insert(0) += 1;
+  
+        }
     
+    let stats1024 = stats_from_btree(&key_time_hash, "ML_KEM_1024 Keys Swap");
+    // Get mean + 2 std devs
+    let twosigma = stats1024.mean + 2.0 * stats1024.std_dev;
+
+    let _ = draw_histogram_from_btree(&key_time_hash, "ML_KEM_1024_Keys_Swap", twosigma);
+    println!(        "Stats {} ",stats1024           );
 
 
     
