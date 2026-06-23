@@ -1,0 +1,8 @@
+[package]
+name = "key_for_control"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dilithium-rs = "0.2.0"
+base65 = { path = "../base65"}

@@ -1,0 +1,9 @@
+[package]
+name = "control"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+base65 = { path = "../base65" }
+dilithium-rs = "0.2.0"
+soft-aes = "0.2.2"
