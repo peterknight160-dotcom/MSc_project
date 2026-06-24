@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 base65 = { path = "../base65" }
+
 dilithium-rs = { version ="0.2.0", features = ["serde"]}
 soft-aes = "0.2.2"
 serde = { version = "1.0.228", features = ["derive"] }

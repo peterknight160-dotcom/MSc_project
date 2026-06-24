@@ -63,7 +63,7 @@ fn get_input(prompt: &str) -> String {
     input.trim_end().to_string()
 }
 
-fn gen_keys(sender: &str, verifer :& str) {
+fn gen_keys(sender: &str, verifier :& str) {
 
     let my_aes256 = base64_to_bytes(AES256).unwrap();
     let my_private_signature = base64_to_bytes(PRIVATE).unwrap();
@@ -105,8 +105,14 @@ fn gen_keys(sender: &str, verifer :& str) {
      //println!("ciphertext is {:?} ", encrypted);
      println!(" sender_json {:?} ", sender_json.len());
        //println!(" sender_payload_json {:?} ", sender_payload_json);
-     let mut stream = TcpStream::connect(sender).unwrap();
-     stream.write_all(sender_json.as_bytes()).unwrap();
+
+    if let Ok(mut stream) = TcpStream::connect(sender) {
+         stream.write_all(sender_json.as_bytes()).unwrap();
+
+    } else {
+        println!("Couldn't connect to sender side, skipped");
+    }
+    
  
 
 
@@ -128,9 +134,15 @@ fn gen_keys(sender: &str, verifer :& str) {
     };
     let verifier_json = serde_json::to_string(&verifier_message).unwrap();
     // Send message to verifier
-   let mut stream = TcpStream::connect(verifer).unwrap();
-     stream.write_all(verifier_json.as_bytes()).unwrap();
+    
 
+    if let Ok(mut stream) = TcpStream::connect(verifier) {
+         stream.write_all(verifier_json.as_bytes()).unwrap();
+
+    } else {
+        println!("Couldn't connect to verifer side, skipped");
+    }
+    
 
     //let encrypted = aes_enc_ecb(&package.as_bytes(), &my_aes256, padding).expect("Encryption failed");
     //let signature: dilithium::DilithiumSignature = my_signing_key.sign(&encrypted, &[]).unwrap();
