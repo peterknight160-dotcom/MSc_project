@@ -1,7 +1,7 @@
 
 
-use std::io::Read;
-use std::net::TcpListener;
+use std::io::{self, Write};
+use std::net::{TcpListener,TcpStream};
 include!("keys.rs");
 
 use dilithium::{DilithiumKeyPair, DilithiumSignature,ML_DSA_44, ML_DSA_87, MlDsaKeyPair};
@@ -27,12 +27,25 @@ struct SignedCipherText {
     payload: PayloadType,
 }
 #[derive(Serialize, Deserialize, Debug)]
+struct SignedRQ {
+    text: Vec<u8>,
+    signature: DilithiumSignature,
+    
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct MLKEMKEYS {
+//    text: Vec<u8>,
+  //  signature: DilithiumSignature,
+    
+}
+#[derive(Serialize, Deserialize, Debug)]
 enum PayloadType {
     SenderKey,
     VerifierKey,
 }
 #[derive(Debug)]
-pub struct SignatureKeys {
+pub struct  SignatureKeys {
     private_key: Vec<u8>,
     public_key: Vec<u8>,
     signing_key: Option<DilithiumKeyPair>,
@@ -44,7 +57,7 @@ pub fn get_keys_from_control (addr: &str ) ->SignatureKeys {
      let control_aes = base64_to_bytes(AES256).unwrap();
     // Bind to address and port (e.g., 127.0.0.1:8080)
     let listener = TcpListener::bind(addr).expect("Failed to connect to network");
-    println!("Listening on 127.0.0.1:8080...");
+    println!("Listening on {} ...", addr);
     let mut buffer = [0; 100_000];
     let mut nbytes: usize = 0;
     let mut my_private_key: Vec<u8> = Vec::new();
@@ -134,4 +147,64 @@ pub fn get_keys_from_control (addr: &str ) ->SignatureKeys {
         my_id
     }
 
+}
+
+
+pub fn generate_ml_kem_keys ( signaturekeys: SignatureKeys , addr: &str) -> MLKEMKEYS {
+
+    // Wait for request from dongle 
+     // Bind to address and port (e.g., 127.0.0.1:8080)
+    let listener = TcpListener::bind(addr).expect("Failed to connect to network");
+      for stream in listener.incoming() {
+        match stream {
+            Ok(mut stream) => {
+                println!("New connection from: {}", stream.peer_addr().unwrap());
+
+                let mut buffer = [0; 100_000];
+
+                // Read data from the stream
+                match stream.read(&mut buffer) {
+                    Ok(bytes_read) => {
+                        if bytes_read > 0 {
+                            let received = String::from_utf8_lossy(&buffer[..bytes_read]);
+                           
+                        }
+                    }
+                    Err(e) => eprintln!("Failed to read from connection: {}", e),
+                }
+
+                // Decompose Request and check signature
+
+
+           
+            }
+            Err(e) => eprintln!("Connection failed: {}", e),
+        }
+
+    }
+    todo!("Stffe ");
+    MLKEMKEYS {  }
+}
+
+
+    
+
+
+
+pub fn send_signed_rq (signaturekeys: SignatureKeys , receiver_addr: &str ) 
+{ 
+    let my_text= "Ready to send".as_bytes();
+    // Signed text using my 
+    let signing_key = signaturekeys.signing_key.unwrap();
+    let signature = signing_key.sign (my_text, &[] ).unwrap();
+    let my_signedrq = SignedRQ {text: Vec::from (my_text),
+          signature};
+    let request_json= serde_json::to_string(&my_signedrq).unwrap();
+    if let Ok(mut stream) = TcpStream::connect(receiver_addr) {
+         stream.write_all(request_json.as_bytes()).unwrap();
+
+    } else {
+        println!("Couldn't connect to verifer side, skipped");
+    }
+    
 }

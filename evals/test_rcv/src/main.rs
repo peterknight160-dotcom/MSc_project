@@ -1,4 +1,4 @@
-use std::io::{Read};
+use std::io::{Read, Write};
 use std::net::TcpListener;
 
 fn main() -> std::io::Result<()> {
@@ -24,6 +24,7 @@ fn main() -> std::io::Result<()> {
                     }
                     Err(e) => eprintln!("Failed to read from connection: {}", e),
                 }
+            //    stream.write_all("I got your input".as_bytes()).expect("Failed to send");
             }
             Err(e) => eprintln!("Connection failed: {}", e),
         }

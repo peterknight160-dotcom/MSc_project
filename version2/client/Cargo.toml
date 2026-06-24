@@ -4,10 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-base65 = { path = "../base65" }
-core_utils = { path = "../core_utils" }
-dilithium-rs = { version ="0.2.0", features = ["serde"]}
-soft-aes = "0.2.2"
 
-serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.150"
+core_utils = { path = "../core_utils" }
+
