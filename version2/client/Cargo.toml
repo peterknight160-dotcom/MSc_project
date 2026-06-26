@@ -7,3 +7,4 @@ edition = "2024"
 
 core_utils = { path = "../core_utils" }
 
+tokio = { version = "1", features = ["full"] }

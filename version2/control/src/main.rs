@@ -76,7 +76,7 @@ fn gen_keys(sender: &str, verifier :& str) {
     .expect("Failed");
     // Generate keys & pack into Structure
     let sender_kp = MlDsaKeyPair::generate(ML_DSA_44).unwrap();
-    println!( "sender_kp : {:?}", sender_kp);
+
     let sender_payload = AuthenticationPackage {
         privatekey: sender_kp.private_key().to_vec(),
         publickey: sender_kp.public_key().to_vec(),
@@ -85,7 +85,7 @@ fn gen_keys(sender: &str, verifier :& str) {
 
     let sender_payload_json = serde_json::to_string(&sender_payload).unwrap();
 
-    println!(" sender_payload_json {:?} ", sender_payload_json.len());
+
 
     let padding = Some("PKCS7");
     let encrypted = aes_enc_ecb(&sender_payload_json.as_bytes(), &my_aes256, padding)
@@ -102,9 +102,7 @@ fn gen_keys(sender: &str, verifier :& str) {
     };
     let sender_json = serde_json::to_string(&sender_message).unwrap();
     // Send message to sender
-     //println!("ciphertext is {:?} ", encrypted);
-     println!(" sender_json {:?} ", sender_json.len());
-       //println!(" sender_payload_json {:?} ", sender_payload_json);
+    
 
     if let Ok(mut stream) = TcpStream::connect(sender) {
          stream.write_all(sender_json.as_bytes()).unwrap();
