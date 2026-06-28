@@ -6,5 +6,6 @@ edition = "2024"
 [dependencies]
 
 core_utils = { path = "../core_utils" }
+lattice-kyber = { version = "0.1", features = ["getrandom","serde"] }
 
 tokio = { version = "1", features = ["full"] }

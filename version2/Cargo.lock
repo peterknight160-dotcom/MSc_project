@@ -38,6 +38,7 @@ name = "client"
 version = "0.1.0"
 dependencies = [
  "core_utils",
+ "lattice-kyber",
  "tokio",
 ]
 
@@ -58,6 +59,7 @@ version = "0.1.0"
 dependencies = [
  "base65",
  "dilithium-rs",
+ "lattice-kyber",
  "serde",
  "serde_json",
  "soft-aes",
@@ -153,6 +155,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "lattice-kyber"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "602d7ee77b8854f55e3c8acba88f84ef97fd3cf838ff229a0193c82f1bd4233b"
+dependencies = [
+ "getrandom",
+ "serde",
+ "sha3",
+ "subtle",
+ "zeroize",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.186"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -236,6 +251,8 @@ name = "receiver"
 version = "0.1.0"
 dependencies = [
  "core_utils",
+ "lattice-kyber",
+ "serde_json",
  "tokio",
 ]
 
@@ -439,6 +456,20 @@ name = "zeroize"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e13c156562582aa81c60cb29407084cdb54c4164760106ab78e6c5b0858cf64e"
+dependencies = [
+ "zeroize_derive",
+]
+
+[[package]]
+name = "zeroize_derive"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c50655cbb0fe3fc43170059e702f1ce5e19b84cec58dc87b037a09935c2f328"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "zmij"

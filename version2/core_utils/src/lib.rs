@@ -4,6 +4,7 @@ use std::net::{TcpListener, TcpStream};
 include!("keys.rs");
 
 use dilithium::{DilithiumKeyPair, DilithiumSignature, ML_DSA_44, ML_DSA_87, MlDsaKeyPair};
+use kyber::{ML_KEM_512, MlKemCiphertext, MlKemKeyPair};
 use serde::{Deserialize, Serialize};
 //use serde_json::Result;
 use base65::*;
@@ -25,18 +26,20 @@ struct SignedCipherText {
     signature: DilithiumSignature,
     payload: PayloadType,
 }
+
 #[derive(Serialize, Deserialize, Debug)]
 struct SignedRQ {
     text: Vec<u8>,
     signature: DilithiumSignature,
 }
 
-/*#[derive(Serialize, Deserialize, Debug)]
- struct MLKEMKEYS {
-  ek: ml_kem::EncapsulationKey,
-  signature: DilithiumSignature,
+type KyberPubKey = Vec<u8>;
 
-} */
+#[derive(Serialize, Deserialize, Debug)]
+struct SignedKyberPubKey {
+    pub_key: KyberPubKey,
+    signature: DilithiumSignature,
+}
 #[derive(Serialize, Deserialize, Debug)]
 enum PayloadType {
     SenderKey,
@@ -150,70 +153,143 @@ pub fn get_keys_from_control(addr: &str) -> Result<SignatureKeys, std::io::Error
 }
 
 //Client  Step3
-pub fn send_signed_rq(receiver_addr: &str) -> Result<String, io::Error> {
-    let my_text = "Ready to send".as_bytes();
+pub fn send_signed_rq(
+    signature_keys: &SignatureKeys,
+    receiver_addr: &str,
+) -> Result<String, io::Error> {
+    let text = "Ready to send".as_bytes();
+    let signature = signature_keys
+        .signing_key
+        .as_ref()
+        .unwrap()
+        .sign(text, &[])
+        .unwrap();
+    let signed_message = SignedRQ {
+        text: text.to_vec(),
+        signature,
+    };
+    let sender_json = serde_json::to_string(&signed_message).unwrap();
+
+    println!("sender_json is {} long", sender_json.len());
+
     let mut stream = TcpStream::connect(receiver_addr)?;
-    stream.write_all(my_text)?;
+    stream.write_all(sender_json.as_bytes())?;
     Ok(String::from("Ok"))
 }
 
 // Receiver Step3
-pub fn receive_signed_rq(addr: &str) -> Result<String, io::Error> {
+pub fn receive_signed_rq(signature_keys: &SignatureKeys, addr: &str) -> Result<String, io::Error> {
     let listener = TcpListener::bind(addr)?;
 
     let (mut socket, _remote_addr) = listener.accept()?;
 
-    let mut buffer = [0u8; 1000];
+    let mut buffer = [0u8; 100_000];
     let bytes_read = socket.read(&mut buffer)?;
 
-    if bytes_read > 0 {
-        return Ok(String::from_utf8_lossy(&buffer[..bytes_read]).to_string());
-    } else {
+    if bytes_read == 0 {
         return Err(Error::new(ErrorKind::Other, "Nothing read"));
+
+        //return Ok(String::from_utf8_lossy(&buffer[..bytes_read]).to_string());
+    } else {
+        let signed_message: SignedRQ = serde_json::from_slice(&buffer[..bytes_read]).unwrap();
+        let signature = signed_message.signature;
+
+        if MlDsaKeyPair::verify(
+            &signature_keys.verifier_key,
+            &signature,
+            &signed_message.text,
+            &[],
+            ML_DSA_44,
+        ) {
+            return Ok(String::from_utf8(signed_message.text).unwrap());
+        } else {
+            return Err(Error::new(
+                ErrorKind::Other,
+                "Authorisation Failed in receive_signed_rq ",
+            ));
+        }
     }
 }
 
 //Receiver  Step 4
 
-pub fn send_ml_keys(addr: &str) -> Result<String, io::Error> {
-    let my_text = "Have some ML_KEM_keys".as_bytes();
+pub fn send_ml_keys(signature_keys: &SignatureKeys, addr: &str) -> Result<MlKemKeyPair, io::Error> {
+    //let my_text = "Have some ML_KEM_keys".as_bytes();
+    let kp = MlKemKeyPair::generate(ML_KEM_512).unwrap();
+
+    let pub_key = kp.public_key();
+    let signature = signature_keys
+        .signing_key
+        .as_ref()
+        .unwrap()
+        .sign(pub_key, &[])
+        .unwrap();
+    let signed_message = SignedKyberPubKey {
+        pub_key: pub_key.to_vec(),
+        signature,
+    };
+    let signed_message = serde_json::to_string(&signed_message).unwrap();
+
     let mut stream = TcpStream::connect(addr)?;
-    stream.write_all(my_text)?;
-    Ok(String::from("Ok"))
+    stream.write_all(signed_message.as_bytes())?;
+    Ok(kp)
 }
 
 //Client Step 4
-pub fn get_ml_keys(addr: &str) -> Result<String, io::Error> {
+pub fn get_ml_keys(signature_keys: &SignatureKeys, addr: &str) -> Result<KyberPubKey, io::Error> {
     let listener = TcpListener::bind(addr)?;
     let (mut socket, _remote_addr) = listener.accept()?;
-    let mut buffer = [0u8; 1000];
+    let mut buffer = [0u8; 100_000];
     let bytes_read = socket.read(&mut buffer)?;
-    if bytes_read > 0 {
-        return Ok(String::from_utf8_lossy(&buffer[..bytes_read]).to_string());
-    } else {
+    if bytes_read == 0 {
         return Err(Error::new(ErrorKind::Other, "Nothing read"));
+
+        //return Ok(String::from_utf8_lossy(&buffer[..bytes_read]).to_string());
+    } else {
+        let signed_message: SignedKyberPubKey =
+            serde_json::from_slice(&buffer[..bytes_read]).unwrap();
+        let signature = signed_message.signature;
+
+        if MlDsaKeyPair::verify(
+            &signature_keys.verifier_key,
+            &signature,
+            &signed_message.pub_key,
+            &[],
+            ML_DSA_44,
+        ) {
+            return Ok(signed_message.pub_key);
+        } else {
+            return Err(Error::new(
+                ErrorKind::Other,
+                "Authorisation Failed in receive_signed_rq ",
+            ));
+        }
     }
 }
 
 //Client Step 5
 
-pub fn send_ciphertext(receiver_addr: &str) -> Result<String, io::Error> {
-    let my_text = "Here is the ciphertext".as_bytes();
+pub fn send_ciphertext(ct: MlKemCiphertext, receiver_addr: &str) -> Result<String, io::Error> {
+    let message = serde_json::to_string(&ct).unwrap();
+
     let mut stream = TcpStream::connect(receiver_addr)?;
-    stream.write_all(my_text)?;
+    stream.write_all(message.as_bytes())?;
+
     Ok(String::from("Ok"))
 }
 //Receiver Step 5
-pub fn get_ciphertext(addr: &str) -> Result<String, io::Error> {
+pub fn get_ciphertext(addr: &str) -> Result<MlKemCiphertext, io::Error> {
     let listener = TcpListener::bind(addr)?;
+    let ct: MlKemCiphertext;
     let (mut socket, _remote_addr) = listener.accept()?;
-    let mut buffer = [0u8; 1000];
+    let mut buffer = [0u8; 100_000];
     let bytes_read = socket.read(&mut buffer)?;
-    if bytes_read > 0 {
-        return Ok(String::from_utf8_lossy(&buffer[..bytes_read]).to_string());
-    } else {
+    if bytes_read == 0 {
         return Err(Error::new(ErrorKind::Other, "Nothing read"));
+    } else {
+        ct = serde_json::from_slice(&buffer[..bytes_read]).unwrap();
     }
+    Ok(ct)
 }
 
 //Receiver Step 7
@@ -237,71 +313,3 @@ pub fn receive_send_ready(addr: &str) -> Result<String, io::Error> {
         return Err(Error::new(ErrorKind::Other, "Nothing read"));
     }
 }
-
-/* pub fn generate_ml_kem_keys ( signaturekeys: SignatureKeys , addr: &str) -> MLKEMKEYS {
-
-    // Wait for request from dongle
-     // Bind to address and port (e.g., 127.0.0.1:8080)
-    let listener = TcpListener::bind(addr).expect("Failed to connect to network");
-      let mut buffer = [0; 10_000];
-
-    match listener.accept() {
-       Ok((stream, addr)) => println!("new client: {addr:?}"),
-       Err(e) => println!("couldn't get client: {e:?}"),
-     }
-
-                // Read data from the stream
-     match stream.read(&mut buffer) {
-        Ok(bytes_read) => {
-           if bytes_read > 0 {
-                  let received = String::from_utf8_lossy(&buffer[..bytes_read]);
-                      }
-                  }
-              Err(e) => eprintln!("Failed to read from connection: {}", e),
-            }
-        // Decompose Request and check signature
-        let deserialized : SignedRQ = serde_json::from_slice(&buffer[..nbytes]).unwrap();
-        // Signature good
-        let signature = deserialized.signature;
-        if ! MlDsaKeyPair::verify(
-              &base64_to_bytes(PUBLIC).unwrap(),
-              &signature,
-               deserialized.ciphertext.as_slice(),
-              &[],
-             ML_DSA_44, )  {
-               panic!("Failed to get good client signature from control");
-        }
-        if ! deserialized.text == "Ready to send".as_bytes() {
-              panic!("Wrong RQ ");
-        }
-          MLKEMKEYS {  }
-
-
-
-    }
-
-
-}
-
-
-
-
-
-
-pub fn send_signed_rq (signaturekeys: SignatureKeys , receiver_addr: &str )  -> String
-{
-    let my_text= "Ready to send".as_bytes();
-    // Signed text using my
-    let signing_key = signaturekeys.signing_key.unwrap();
-    let signature = signing_key.sign (my_text, &[] ).unwrap();
-    let my_signedrq = SignedRQ {text: Vec::from (my_text),
-          signature};
-    let request_json= serde_json::to_string(&my_signedrq).unwrap();
-    if let Ok(mut stream) = TcpStream::connect(receiver_addr) {
-         stream.write_all(request_json.as_bytes()).unwrap();
-
-    } else {
-        println!("Couldn't connect to verifer side, skipped");
-    }
-
-} */
