@@ -8,7 +8,7 @@ use kyber::{ML_KEM_512, MlKemCiphertext, MlKemKeyPair};
 use serde::{Deserialize, Serialize};
 //use serde_json::Result;
 use base65::*;
-use soft_aes::aes::aes_dec_ecb;
+use soft_aes::aes::{aes_dec_ecb,aes_enc_ecb};
 #[derive(Serialize, Deserialize, Debug)]
 struct AuthenticationPackage {
     privatekey: Vec<u8>,
@@ -45,6 +45,12 @@ enum PayloadType {
     SenderKey,
     VerifierKey,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+struct OBDmessage{
+    ciphertext: Vec<u8>
+}
+
 #[derive(Debug)]
 pub struct SignatureKeys {
     private_key: Vec<u8>,
@@ -170,7 +176,7 @@ pub fn send_signed_rq(
     };
     let sender_json = serde_json::to_string(&signed_message).unwrap();
 
-    println!("sender_json is {} long", sender_json.len());
+ 
 
     let mut stream = TcpStream::connect(receiver_addr)?;
     stream.write_all(sender_json.as_bytes())?;
@@ -294,22 +300,56 @@ pub fn get_ciphertext(addr: &str) -> Result<MlKemCiphertext, io::Error> {
 
 //Receiver Step 7
 
-pub fn send_ready(addr: &str) -> Result<String, io::Error> {
-    let my_text = "Ready to send encrypted text".as_bytes();
-    let mut stream = TcpStream::connect(addr)?;
-    stream.write_all(my_text)?;
-    Ok(String::from("Ok"))
+pub fn receive_loop (aes_key: &[u8], addr: &str) -> Result<u8, io::Error> {
+    let listener = TcpListener::bind(addr).expect("Failed to connect to network");
+    println!("Listening on {} ...", addr);
+    let mut buffer = [0; 100_000];
+    let mut nbytes: usize ;
+    let padding = Some("PKCS7");
+   
+    // Accept incoming connections
+    for stream in listener.incoming() {
+        if stream.is_ok() {
+            nbytes = stream.unwrap().read(&mut buffer)?;
+        } else {
+            return Err(Error::new(ErrorKind::Other, "Bad stream"));
+        }
+        let deserialized: OBDmessage =serde_json::from_slice(&buffer[..nbytes]).unwrap();
+             let byte_stream = aes_dec_ecb(deserialized.ciphertext.as_slice(), &aes_key, padding)
+                .expect("Decrypt failed");
+
+
+
+        let text = match  String::from_utf8 (byte_stream) {
+            Ok(v) => v,
+            Err (e) => panic!( "Got {} ",e)
+        };
+
+        println!(" Got \"{}\"  from client", text);
+        if text == "END" {
+            break
+        }
+
+       
+
+    }
+    Ok(1)
+
 }
 
 //Client Step 7
-pub fn receive_send_ready(addr: &str) -> Result<String, io::Error> {
-    let listener = TcpListener::bind(addr)?;
-    let (mut socket, _remote_addr) = listener.accept()?;
-    let mut buffer = [0u8; 1000];
-    let bytes_read = socket.read(&mut buffer)?;
-    if bytes_read > 0 {
-        return Ok(String::from_utf8_lossy(&buffer[..bytes_read]).to_string());
-    } else {
-        return Err(Error::new(ErrorKind::Other, "Nothing read"));
-    }
+pub fn receive_send_ready(text: String , aes_key: &[u8], receiver_addr:  &str) -> Result<u16, io::Error> {
+    
+    let encrypted =  OBDmessage {
+        ciphertext: aes_enc_ecb(&text.as_bytes(), aes_key ,  Some("PKCS7")).unwrap(),
+    };
+    let serialized = serde_json::to_string(&encrypted).unwrap();
+
+    let mut stream = TcpStream::connect(receiver_addr)?;
+    stream.write_all(serialized.as_bytes())?;
+
+    /*
+     let encrypted = aes_enc_ecb(&verifier_payload_json.as_bytes(), &my_aes256, padding)
+        .expect("Encryption failed"); */
+    Ok (1)
 }

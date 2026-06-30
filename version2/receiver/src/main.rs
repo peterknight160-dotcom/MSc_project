@@ -1,5 +1,7 @@
 // Implement the receiver
 
+use std::ptr::read;
+
 use core_utils::*;
 use kyber::{MlKemKeyPair, ML_KEM_512,MlKemCiphertext };
 //use serde::{Deserialize, Serialize};
@@ -28,17 +30,13 @@ fn main() -> std::io::Result<()> {
     std::thread::sleep(std::time::Duration::from_millis(100));
 
     let s = send_ml_keys(&signature_keys, ADDR);
-    if s.is_ok() {
-        println!("Got {:?} from send_ml_keys ", s.as_ref().unwrap().public_key());
-    }
+  
     let key_pair= s.unwrap();
 
     //let (ct, ss_sender) = kyber::safe_encaps(ML_KEM_512, key_pair.public_key()).unwrap(); 
     //Step 5
     let s = get_ciphertext(RECEIVER_ADDR);
-    if s.is_ok() {
-        println!("Got MlKemCiphertext from send_ml_keys ");
-    }
+ 
      
     let ct= s.unwrap();
 
@@ -51,7 +49,8 @@ fn main() -> std::io::Result<()> {
        //Step 7
     std::thread::sleep(std::time::Duration::from_millis(100));
 
-    let s = send_ready(ADDR);
+    let s = receive_loop(ss_receiver.as_bytes(), RECEIVER_ADDR);
+    
     if s.is_ok() {
         println!("Got {} from send_ready ", s.unwrap());
     }

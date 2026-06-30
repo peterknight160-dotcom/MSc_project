@@ -2,6 +2,7 @@ use core_utils::*;
 const ADDR: &str = "127.0.0.1:8080";
 const RECEIVER_ADDR: &str = "127.0.0.1:8090";
 use kyber::{ML_KEM_512, MlKemCiphertext, MlKemKeyPair};
+use std::io::{self, Write};
 
 fn main() -> std::io::Result<()> {
     // Step 1
@@ -22,15 +23,13 @@ fn main() -> std::io::Result<()> {
         Err(_) => panic!("Failed to send keys, exiting"),
     };
 
-    println!(" Got \"{:?}\" from send_signed_rq", s);
+  
 
     //Step 4
-    println!("Waiting for ml_keys");
+  
     let s = get_ml_keys(&signature_keys, ADDR);
 
-    if s.is_ok() {
-        println!("Got \"{:?}\" from get_ml_keys ", s.as_ref().unwrap());
-    }
+  
     let pub_key = s.unwrap();
 
     std::thread::sleep(std::time::Duration::from_millis(100));
@@ -43,12 +42,34 @@ fn main() -> std::io::Result<()> {
         println!("Got {}", s.unwrap());
     }
 
-    println!("Shared Secret is {:?}", ss_sender.as_bytes());
-    //Step 7
-    let s = receive_send_ready(ADDR);
-    if s.is_ok() {
-        println!("Got {}", s.unwrap());
+      println!("Shared Secret is {:?}", ss_sender.as_bytes());
+    //    Step 7 Loop around, sending stuff to the receiver
+    loop {
+        let input = get_input("What would you like to send (\"END\" will stop the interaction) ");
+        match input.as_str() {
+            "END" =>break ,
+            _ => send (input,  ss_sender.as_bytes(), RECEIVER_ADDR)
+        };
+        
+  
     }
+   send (String::from ("END"),  ss_sender.as_bytes(), RECEIVER_ADDR);
 
     Ok(())
+}
+
+fn get_input(prompt: &str) -> String {
+    let mut input = String::new();
+    println!("{}", prompt);
+
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read line");
+    // Remove any trailing whitespace
+    input.trim_end().to_string()
+}
+
+
+fn send  (input: String , aes_key : &[u8], receiver_addr: &str) {
+    let _ = receive_send_ready (input, aes_key, receiver_addr);
 }
