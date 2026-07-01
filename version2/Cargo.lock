@@ -43,6 +43,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "client_tokio"
+version = "0.1.0"
+dependencies = [
+ "core_utils_tokio",
+ "lattice-kyber",
+ "tokio",
+]
+
+[[package]]
 name = "control"
 version = "0.1.0"
 dependencies = [
@@ -63,6 +72,19 @@ dependencies = [
  "serde",
  "serde_json",
  "soft-aes",
+]
+
+[[package]]
+name = "core_utils_tokio"
+version = "0.1.0"
+dependencies = [
+ "base65",
+ "dilithium-rs",
+ "lattice-kyber",
+ "serde",
+ "serde_json",
+ "soft-aes",
+ "tokio",
 ]
 
 [[package]]
@@ -251,6 +273,16 @@ name = "receiver"
 version = "0.1.0"
 dependencies = [
  "core_utils",
+ "lattice-kyber",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "receiver_tokio"
+version = "0.1.0"
+dependencies = [
+ "core_utils_tokio",
  "lattice-kyber",
  "serde_json",
  "tokio",

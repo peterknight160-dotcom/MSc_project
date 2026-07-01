@@ -33,8 +33,8 @@ enum PayloadType {
 }
 
 const CLIENT: &str = "127.0.0.1:8080";
-const RECEIVER: &str = "127.0.0.1:8090";
-
+//const RECEIVER: &str = "127.0.0.1:8090";
+const RECEIVER_CONTROL: &str = "127.0.0.1:8095";
 fn main() {
     // Don't need public key here.
 
@@ -43,8 +43,9 @@ fn main() {
         let input = get_input("What would you like to do?");
         match input.as_str() {
             "exit" => break,
-            "client" => gen_keys(CLIENT, RECEIVER),
-            "receiver" => gen_keys(RECEIVER, CLIENT),
+            "client" => gen_keys(CLIENT, RECEIVER_CONTROL),
+            "receiver" => gen_keys(RECEIVER_CONTROL, CLIENT),
+            //"control" => gen_keys(RECEIVER_CONTROL, CLIENT),
             _ => continue,
         }
     }

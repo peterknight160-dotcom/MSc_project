@@ -1,6 +1,6 @@
 // Implement the receiver
 
-use std::ptr::read;
+
 
 use core_utils::*;
 use kyber::{MlKemKeyPair, ML_KEM_512,MlKemCiphertext };
@@ -27,7 +27,7 @@ fn main() -> std::io::Result<()> {
         println!("Got a messge \"{}\" long from receive_signed_rq ", s.unwrap());
     }
 
-    std::thread::sleep(std::time::Duration::from_millis(100));
+
 
     let s = send_ml_keys(&signature_keys, ADDR);
   
@@ -47,7 +47,7 @@ fn main() -> std::io::Result<()> {
 
 
        //Step 7
-    std::thread::sleep(std::time::Duration::from_millis(100));
+   
 
     let s = receive_loop(ss_receiver.as_bytes(), RECEIVER_ADDR);
     
