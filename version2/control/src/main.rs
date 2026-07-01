@@ -7,6 +7,7 @@ use std::io::{self, Write};
 use std::net::TcpStream;
 include!("consts.rs"); // Not clean rust code, but otherwise gets very messy
 
+
 use soft_aes::aes::aes_enc_ecb;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -81,10 +82,11 @@ fn gen_keys(sender: &str, verifier: &str) {
         client_id: String::from("one"),
     };
 
-    let sender_payload_json = serde_json::to_string(&sender_payload).unwrap();
+    let sender_payload_bytes = postcard::to_allocvec(&sender_payload).unwrap();
+
 
     let padding = Some("PKCS7");
-    let encrypted = aes_enc_ecb(&sender_payload_json.as_bytes(), &my_aes256, padding)
+    let encrypted = aes_enc_ecb(&sender_payload_bytes, &my_aes256, padding)
         .expect("Encryption failed");
 
     // Sign encrypted with my_private_key
@@ -96,11 +98,13 @@ fn gen_keys(sender: &str, verifier: &str) {
         signature: signature,
         payload: PayloadType::SenderKey,
     };
-    let sender_json = serde_json::to_string(&sender_message).unwrap();
+    let sender_bytes = postcard::to_allocvec(&sender_message).unwrap();
     // Send message to sender
 
     if let Ok(mut stream) = TcpStream::connect(sender) {
-        stream.write_all(sender_json.as_bytes()).unwrap();
+        let len = (sender_bytes.len() as u32).to_be_bytes();
+        stream.write_all(&len).unwrap();
+        stream.write_all(&sender_bytes).unwrap();
     } else {
         println!("Couldn't connect to sender side, skipped");
     }
@@ -111,8 +115,8 @@ fn gen_keys(sender: &str, verifier: &str) {
         client_id: String::from("one"),
     };
 
-    let verifier_payload_json = serde_json::to_string(&verifier_payload).unwrap();
-    let encrypted = aes_enc_ecb(&verifier_payload_json.as_bytes(), &my_aes256, padding)
+    let verifier_payload_bytes = postcard::to_allocvec(&verifier_payload).unwrap();
+    let encrypted = aes_enc_ecb(&verifier_payload_bytes, &my_aes256, padding)
         .expect("Encryption failed");
     let signature = my_signing_key.sign(&encrypted, &[]).unwrap();
 
@@ -121,11 +125,13 @@ fn gen_keys(sender: &str, verifier: &str) {
         signature: signature,
         payload: PayloadType::VerifierKey,
     };
-    let verifier_json = serde_json::to_string(&verifier_message).unwrap();
+    let verifier_bytes = postcard::to_allocvec(&verifier_message).unwrap();
     // Send message to verifier
 
     if let Ok(mut stream) = TcpStream::connect(verifier) {
-        stream.write_all(verifier_json.as_bytes()).unwrap();
+        let len = (verifier_bytes.len() as u32).to_be_bytes();
+        stream.write_all(&len).unwrap();
+        stream.write_all(&verifier_bytes).unwrap();
     } else {
         println!("Couldn't connect to verifer side, skipped");
     }
