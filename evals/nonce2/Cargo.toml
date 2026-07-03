@@ -4,5 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-rand = "0.10.1"
-base65 = { path = "../base65" }
+rand = "0.10.2"
+#base65 = { path = "../base65" }
+base65= {path = "C:\\Users\\peter\\dissertation\\code\\builds\\version2\\base65"}
+chacha20 = "0.10.1"

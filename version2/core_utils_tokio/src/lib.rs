@@ -7,9 +7,11 @@ use postcard;
 use  rand::*; 
 
 
+
 #[macro_use]
 mod my_macros;
-
+pub mod nonce;
+pub use nonce::{generate_nonce_base64, get_time_as_millis_base64, return_time_as_millis_from_base64};
 
 include!("keys.rs");
 
@@ -147,7 +149,7 @@ pub async fn get_keys_from_control(addr: &str) -> Result<SignatureKeys, std::io:
                 have_verifier_key = true;
             }
         }
-
+/* 
         println!(
             "my_private_key {} {:?}",
             my_private_key.len(),
@@ -162,7 +164,7 @@ pub async fn get_keys_from_control(addr: &str) -> Result<SignatureKeys, std::io:
             "my_verifying_key {} {:?}",
             my_verifying_key.len(),
             &my_verifying_key[0..my_verifying_key.len().min(30)]
-        );
+        ); */
 
         if have_signing_key && have_verifier_key {
             break;
@@ -341,3 +343,7 @@ pub fn generate_nonce() -> Vec<u8> {
     rand::rng().fill(&mut nonce[..]);
     nonce
 }
+
+
+// Nonce and timestamp utilities 
+

@@ -3,16 +3,7 @@ use rand::{SeedableRng, TryRng};
 use std::time::SystemTime;
 
 use base65::{base64_from_bytes, base64_to_bytes};
-fn main() {
-    let nonce = generate_nonce_base64();
-    println!("{:?} and {} long", nonce, nonce.len());
-   
-    
-    
-    let time =    get_time_as_millis_base64();
-    println!("{} and {} long", time, time.len());
-    println!("time as u128: {:?}", return_time_as_millis_from_base64(&time));
-}
+
 pub fn generate_nonce_base64() -> String{
     let mut nonce = vec![0u8; 32];
     

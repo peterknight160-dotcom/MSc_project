@@ -4,7 +4,9 @@
 use core_utils_tokio::*;
 use kyber::{ML_KEM_512,  MlKemKeyPair};
 
-
+use std::any;
+use std::collections:: HashMap;
+use std::env::temp_dir;
 use std::io::{ Error, ErrorKind };
 //use serde::{Deserialize, Serialize};
 use ::std::sync::Arc;
@@ -23,6 +25,8 @@ async fn main() -> std::io::Result<()> {
         Err(_) => panic!("Failed to get keys from controller, exiting"),
     };
     let signature_keys = Arc::new(signature_keys);
+    let nonces = Arc::new(tokio::sync::Mutex::new(HashMap::<String, String>::new()));
+
 
     println!("Have both keys, ready to rock and roll");
 
@@ -54,7 +58,7 @@ loop {
             let tx = tx.clone();
 
             tokio::spawn(async move {
-                if let Err(e) = handle_connection(socket, signature_keys, tx).await {
+                if let Err(e) = handle_connection(socket, signature_keys, tx, nonces).await {
                     eprintln!("Error handling {}: {}", addr, e);
                 }
             });
@@ -83,6 +87,7 @@ async fn handle_connection(
     mut socket: TcpStream,
     signature_keys: Arc<SignatureKeys>,
     tx: mpsc::Sender<()>,
+    nonces: Arc<tokio::sync::Mutex<HashMap<String, String>>>,
 ) -> std::io::Result<()> {
     
 
@@ -118,7 +123,7 @@ async fn handle_connection(
          loop {
             let len = socket.read_u32().await?;
             let mut buffer = vec![0; len as usize];
-            let bytes_read = socket.read_exact(&mut buffer).await?;
+            let _bytes_read = socket.read_exact(&mut buffer).await?;
 
             //let received = received_string!(buffer, bytes_read);
 
@@ -128,7 +133,7 @@ async fn handle_connection(
 
             match s {
                 Ok(msg) => {
-                    println!("Got message: {}", msg);
+                    check_message( &msg, Arc::clone(&nonces)).await?;
                     if msg == "END" {
                         println!("Received END message, closing connection.");
                         let _ = tx.send(()).await;
@@ -144,5 +149,36 @@ async fn handle_connection(
         }
     }
 
+    Ok(())
+}
+
+pub async fn check_message(msg: &str, nonces: Arc<tokio::sync::Mutex<HashMap<String, String>>>) -> std::io::Result<()> {
+    println!("Received message: {}", msg);
+    // Split off the nonce and timestamp from the message
+    // Nonce is 44 characters long, timestamp is 12 characters long
+    let nonce = &msg[..44];
+    let timestamp = &msg[44..56];   
+    let text = &msg[56..];
+    match check_nonce(nonce, &nonces).await {
+        Ok(()) => {
+            println!("Nonce is valid");
+        }
+        Err(e) => {
+            eprintln!("Error checking nonce: {}", e);
+        }
+    }
+    
+    Ok(())
+}
+
+pub async  fn check_nonce(nonce: &str, nonces: &tokio::sync::Mutex<HashMap<String, String>>) -> std::io::Result<()> {
+    let mut nonces = nonces.lock().await;
+    if nonces.contains_key(nonce) {
+        return Err(Error::new(
+            ErrorKind::Other,
+            "Nonce has already been used",
+        ));
+    }
+    nonces.insert(nonce.to_string(), String::new());
     Ok(())
 }

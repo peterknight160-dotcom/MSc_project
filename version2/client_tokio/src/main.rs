@@ -1,4 +1,5 @@
 use core_utils_tokio::*;
+use core_utils_tokio::nonce ;
 const ADDR: &str = "127.0.0.1:8080";
 const RECEIVER_ADDR: &str = "127.0.0.1:8090";
 use kyber::ML_KEM_512;
@@ -49,6 +50,8 @@ async fn main() -> std::io::Result<()> {
         };
     }
     send(String::from("END"), ss_sender.as_bytes(), &mut stream).await;
+    // Wait for 100ms
+    std::thread::sleep(std::time::Duration::from_millis(100));
 
     Ok(())
 }
@@ -65,6 +68,10 @@ fn get_input(prompt: &str) -> String {
 }
 
 async fn send(input: String, aes_key: &[u8], stream: &mut TcpStream) {
-    println!("Sending input: {}", input);
-    let _ = receive_send_ready(input, aes_key, stream).await;
+    // Add nonce and timestamp to the input
+    let nonce = generate_nonce_base64();
+    let timestmp = get_time_as_millis_base64();
+    let input_with_nonce_and_timestamp = input + "|" + &nonce + "|" + &timestmp;
+    println!("Sending input: {}", input_with_nonce_and_timestamp);
+    let _ = receive_send_ready(input_with_nonce_and_timestamp, aes_key, stream).await;
 }
