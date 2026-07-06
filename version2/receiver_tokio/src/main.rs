@@ -2,11 +2,12 @@
 
 
 use core_utils_tokio::*;
+use base65::{self, base64_to_bytes};
 use kyber::{ML_KEM_512,  MlKemKeyPair};
 
-use std::any;
-use std::collections:: HashMap;
-use std::env::temp_dir;
+
+//use std::collections:: HashSet;
+
 use std::io::{ Error, ErrorKind };
 //use serde::{Deserialize, Serialize};
 use ::std::sync::Arc;
@@ -25,7 +26,7 @@ async fn main() -> std::io::Result<()> {
         Err(_) => panic!("Failed to get keys from controller, exiting"),
     };
     let signature_keys = Arc::new(signature_keys);
-    let nonces = Arc::new(tokio::sync::Mutex::new(HashMap::<String, String>::new()));
+    let nonces = Arc::new(tokio::sync::Mutex::new(0u64));
 
 
     println!("Have both keys, ready to rock and roll");
@@ -47,6 +48,8 @@ async fn main() -> std::io::Result<()> {
 let (tx, mut rx) = mpsc::channel::<()>(1);
 
 loop {
+    let nonces = Arc::clone(&nonces);
+    println!("Nonces before select: {:?}", nonces.lock().await);
     tokio::select! {
         _ = rx.recv() => {
             println!("Shutdown requested");
@@ -58,7 +61,8 @@ loop {
             let tx = tx.clone();
 
             tokio::spawn(async move {
-                if let Err(e) = handle_connection(socket, signature_keys, tx, nonces).await {
+                
+                if let Err(e) = handle_connection(socket, signature_keys, tx,nonces).await {
                     eprintln!("Error handling {}: {}", addr, e);
                 }
             });
@@ -66,19 +70,7 @@ loop {
     }
 }
 
-    
-/*     loop {
-        
-        let (socket, addr) = listener.accept().await?;
-        println!("New connection from {}", addr);
 
-        let signature_keys = Arc::clone(&signature_keys);
-        tokio::spawn(async move {
-            if let Err(e) = handle_connection(socket, signature_keys).await {
-                eprintln!("Error handling {}: {}", addr, e);
-            }
-        });
-    } */
  
  
 }
@@ -86,8 +78,8 @@ loop {
 async fn handle_connection(
     mut socket: TcpStream,
     signature_keys: Arc<SignatureKeys>,
-    tx: mpsc::Sender<()>,
-    nonces: Arc<tokio::sync::Mutex<HashMap<String, String>>>,
+    tx: mpsc::Sender<()>,    
+    nonces: Arc<tokio::sync::Mutex<u64>>,
 ) -> std::io::Result<()> {
     
 
@@ -152,33 +144,48 @@ async fn handle_connection(
     Ok(())
 }
 
-pub async fn check_message(msg: &str, nonces: Arc<tokio::sync::Mutex<HashMap<String, String>>>) -> std::io::Result<()> {
+pub async fn check_message(msg: &str, nonces: Arc<tokio::sync::Mutex<u64>>) -> std::io::Result<()> {
     println!("Received message: {}", msg);
     // Split off the nonce and timestamp from the message
-    // Nonce is 44 characters long, timestamp is 12 characters long
-    let nonce = &msg[..44];
-    let timestamp = &msg[44..56];   
-    let text = &msg[56..];
-    match check_nonce(nonce, &nonces).await {
+    // Nonce is 28 characters long, timestamp is 12 characters long
+    let nonce = &msg[..28];
+    // use base65 to decode the nonce 
+    let nonce_decoded = String::from_utf8(base64_to_bytes(nonce).unwrap()).unwrap();
+
+       println!("Nonce decoded: {:?}", nonce_decoded);
+
+ // Nonce decoded is Vec<u8> where each u8 is a character
+
+    let nonce_u64 = nonce_decoded.parse::<u64>().unwrap();
+   
+    println!("Nonce: {}, Nonce as u64: {}", nonce, nonce_u64);
+
+    let timestamp = &msg[28..40];   
+    let text = &msg[40..];
+    match check_nonce(&nonce_u64, Arc::clone(&nonces)).await {
         Ok(()) => {
             println!("Nonce is valid");
         }
         Err(e) => {
-            eprintln!("Error checking nonce: {}", e);
+          return Err(Error::new(
+                ErrorKind::Other,
+                format!("Nonce check failed: {}", e),
+            ));
         }
     }
     
     Ok(())
 }
 
-pub async  fn check_nonce(nonce: &str, nonces: &tokio::sync::Mutex<HashMap<String, String>>) -> std::io::Result<()> {
-    let mut nonces = nonces.lock().await;
-    if nonces.contains_key(nonce) {
+pub async  fn check_nonce(nonce_u64: &u64, nonces: Arc<tokio::sync::Mutex<u64>>) -> std::io::Result<()> {
+    let mut largest_nonce = nonces.lock().await;
+    if *largest_nonce >= *nonce_u64 {
         return Err(Error::new(
             ErrorKind::Other,
             "Nonce has already been used",
         ));
     }
-    nonces.insert(nonce.to_string(), String::new());
+    *largest_nonce = *nonce_u64;
+    println!("Largest nonce: {:?}", largest_nonce);
     Ok(())
 }

@@ -43,9 +43,9 @@ fn main() {
     loop {
         let input = get_input("What would you like to do?");
         match input.as_str() {
-            "exit" => break,
-            "client" => gen_keys(CLIENT, RECEIVER_CONTROL),
-            "receiver" => gen_keys(RECEIVER_CONTROL, CLIENT),
+            "exit" | "e" => break,
+            "client" | "c" => gen_keys(CLIENT, RECEIVER_CONTROL),
+            "receiver" | "reciever" | "r" => gen_keys(RECEIVER_CONTROL, CLIENT),
             //"control" => gen_keys(RECEIVER_CONTROL, CLIENT),
             _ => continue,
         }

@@ -149,22 +149,7 @@ pub async fn get_keys_from_control(addr: &str) -> Result<SignatureKeys, std::io:
                 have_verifier_key = true;
             }
         }
-/* 
-        println!(
-            "my_private_key {} {:?}",
-            my_private_key.len(),
-            &my_private_key[0..my_private_key.len().min(30)]
-        );
-        println!(
-            "my_public_key {} {:?}",
-            my_public_key.len(),
-            &my_public_key[0..my_public_key.len().min(30)]
-        );
-        println!(
-            "my_verifying_key {} {:?}",
-            my_verifying_key.len(),
-            &my_verifying_key[0..my_verifying_key.len().min(30)]
-        ); */
+
 
         if have_signing_key && have_verifier_key {
             break;
@@ -322,7 +307,7 @@ pub fn receive_message (aes_key: &[u8], received: &[u8]) -> Result<String, io::E
 //Client Step 7
 pub async fn receive_send_ready(text: String , aes_key: &[u8], stream: &mut TcpStream) -> Result<u16, io::Error> {
     
-    let nonce = base64_from_bytes(&generate_nonce());
+  
     
     let encrypted =  OBDmessage {
         ciphertext: aes_enc_ecb(&text.as_bytes(), aes_key ,  Some("PKCS7")).unwrap(),

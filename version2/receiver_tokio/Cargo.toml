@@ -10,3 +10,5 @@ lattice-kyber = { version = "0.1", features = ["serde"] }
 
 tokio = { version = "1", features = ["full"] }
 serde_json = "1.0.150"
+
+base65 = { path = "../base65" }

@@ -1,5 +1,5 @@
 use core_utils_tokio::*;
-use core_utils_tokio::nonce ;
+use base65::*;
 const ADDR: &str = "127.0.0.1:8080";
 const RECEIVER_ADDR: &str = "127.0.0.1:8090";
 use kyber::ML_KEM_512;
@@ -42,14 +42,16 @@ async fn main() -> std::io::Result<()> {
 
     println!("Shared Secret is {:?}", ss_sender.as_bytes());
     //    Step 7 Loop around, sending stuff to the receiver
+    let mut nonce:u64 = 0;
     loop {
         let input = get_input("What would you like to send (\"END\" will stop the interaction) ");
+        nonce += 1;
         match input.as_str() {
             "END" => break,
-            _ => send(input, ss_sender.as_bytes(), &mut stream).await,
+            _ => send(input, ss_sender.as_bytes(),& nonce,  &mut stream).await,
         };
     }
-    send(String::from("END"), ss_sender.as_bytes(), &mut stream).await;
+    send(String::from("END"), ss_sender.as_bytes(), & nonce, &mut stream).await;
     // Wait for 100ms
     std::thread::sleep(std::time::Duration::from_millis(100));
 
@@ -67,11 +69,12 @@ fn get_input(prompt: &str) -> String {
     input.trim_end().to_string()
 }
 
-async fn send(input: String, aes_key: &[u8], stream: &mut TcpStream) {
+async fn send(input: String, aes_key: &[u8], nonce: & u64, stream: &mut TcpStream) {
     // Add nonce and timestamp to the input
-    let nonce = generate_nonce_base64();
+    // Format nonce as 20-digit zero-padded string
+    let nonce_str = base64_from_str(&   format!("{:020}", nonce)).unwrap();
     let timestmp = get_time_as_millis_base64();
-    let input_with_nonce_and_timestamp = input + "|" + &nonce + "|" + &timestmp;
+    let input_with_nonce_and_timestamp = nonce_str + &timestmp + &input;
     println!("Sending input: {}", input_with_nonce_and_timestamp);
     let _ = receive_send_ready(input_with_nonce_and_timestamp, aes_key, stream).await;
 }
