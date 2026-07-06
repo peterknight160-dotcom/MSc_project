@@ -125,8 +125,8 @@ async fn handle_connection(
 
             match s {
                 Ok(msg) => {
-                    check_message( &msg, Arc::clone(&nonces)).await?;
-                    if msg == "END" {
+                    let text = check_message( &msg, Arc::clone(&nonces)).await?;
+                    if text == "END" {
                         println!("Received END message, closing connection.");
                         let _ = tx.send(()).await;
                         break 'fred;
@@ -144,27 +144,22 @@ async fn handle_connection(
     Ok(())
 }
 
-pub async fn check_message(msg: &str, nonces: Arc<tokio::sync::Mutex<u64>>) -> std::io::Result<()> {
+pub async fn check_message(msg: &str, nonces: Arc<tokio::sync::Mutex<u64>>) -> std::io::Result<String> {
     println!("Received message: {}", msg);
     // Split off the nonce and timestamp from the message
     // Nonce is 28 characters long, timestamp is 12 characters long
     let nonce = &msg[..28];
     // use base65 to decode the nonce 
     let nonce_decoded = String::from_utf8(base64_to_bytes(nonce).unwrap()).unwrap();
-
-       println!("Nonce decoded: {:?}", nonce_decoded);
-
- // Nonce decoded is Vec<u8> where each u8 is a character
-
+ 
     let nonce_u64 = nonce_decoded.parse::<u64>().unwrap();
    
-    println!("Nonce: {}, Nonce as u64: {}", nonce, nonce_u64);
-
+  
     let timestamp = &msg[28..40];   
     let text = &msg[40..];
     match check_nonce(&nonce_u64, Arc::clone(&nonces)).await {
         Ok(()) => {
-            println!("Nonce is valid");
+          ();
         }
         Err(e) => {
           return Err(Error::new(
@@ -174,7 +169,7 @@ pub async fn check_message(msg: &str, nonces: Arc<tokio::sync::Mutex<u64>>) -> s
         }
     }
     
-    Ok(())
+    Ok(text.to_string())
 }
 
 pub async  fn check_nonce(nonce_u64: &u64, nonces: Arc<tokio::sync::Mutex<u64>>) -> std::io::Result<()> {
@@ -186,6 +181,6 @@ pub async  fn check_nonce(nonce_u64: &u64, nonces: Arc<tokio::sync::Mutex<u64>>)
         ));
     }
     *largest_nonce = *nonce_u64;
-    println!("Largest nonce: {:?}", largest_nonce);
+ 
     Ok(())
 }

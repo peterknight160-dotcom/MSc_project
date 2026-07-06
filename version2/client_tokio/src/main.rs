@@ -2,9 +2,11 @@ use core_utils_tokio::*;
 use base65::*;
 const ADDR: &str = "127.0.0.1:8080";
 const RECEIVER_ADDR: &str = "127.0.0.1:8090";
+const JSON_FILE: &str = "JSON.csv";
 use kyber::ML_KEM_512;
 use std::io::{self};
 use tokio::net::TcpStream;
+use client_tokio::{CsvReader, json_doc_from_reader    };
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -34,24 +36,34 @@ async fn main() -> std::io::Result<()> {
     //Step 5
 
     let (ct, ss_sender) = kyber::safe_encaps(ML_KEM_512, pub_key.as_slice()).unwrap();
+    let shared_secret = ss_sender.as_bytes();
     println!("about to send_ciphertext ");
     let s = send_ciphertext(ct, &mut stream).await;
     if s.is_ok() {
         println!("Got {}", s.unwrap());
     }
 
-    println!("Shared Secret is {:?}", ss_sender.as_bytes());
+    println!("Shared Secret is {:?}", shared_secret);
     //    Step 7 Loop around, sending stuff to the receiver
+    // Set up the json file to send to the receiver
+
+    let mut json_reader = CsvReader::set_up(JSON_FILE).unwrap();
+    let headers = json_reader.headers().clone();
+
     let mut nonce:u64 = 0;
     loop {
-        let input = get_input("What would you like to send (\"END\" will stop the interaction) ");
+        let input = get_input("What would you like to send a JSON to the receiver? (Type END to finish)").to_uppercase();
         nonce += 1;
-        match input.as_str() {
+        let line = json_reader.next().unwrap().unwrap();
+        let json_doc_to_send = json_doc_from_reader(line, &headers);
+        match input.as_str()
+        {
             "END" => break,
-            _ => send(input, ss_sender.as_bytes(),& nonce,  &mut stream).await,
+            "YES" | "Y" => send(json_doc_to_send, shared_secret, & nonce,  &mut stream).await,
+            _ => ()
         };
     }
-    send(String::from("END"), ss_sender.as_bytes(), & nonce, &mut stream).await;
+    send(String::from("END"), shared_secret, & nonce, &mut stream).await;
     // Wait for 100ms
     std::thread::sleep(std::time::Duration::from_millis(100));
 
@@ -72,6 +84,7 @@ fn get_input(prompt: &str) -> String {
 async fn send(input: String, aes_key: &[u8], nonce: & u64, stream: &mut TcpStream) {
     // Add nonce and timestamp to the input
     // Format nonce as 20-digit zero-padded string
+   
     let nonce_str = base64_from_str(&   format!("{:020}", nonce)).unwrap();
     let timestmp = get_time_as_millis_base64();
     let input_with_nonce_and_timestamp = nonce_str + &timestmp + &input;

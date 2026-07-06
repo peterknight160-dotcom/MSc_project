@@ -1,4 +1,4 @@
-use std::io::{self, Error, ErrorKind, Read, Write};
+use std::io::{self, Error, ErrorKind};
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
@@ -16,7 +16,7 @@ pub use nonce::{generate_nonce_base64, get_time_as_millis_base64, return_time_as
 include!("keys.rs");
 
 use dilithium::{DilithiumKeyPair, DilithiumSignature, ML_DSA_44, ML_DSA_87, MlDsaKeyPair};
-use kyber::{ML_KEM_512, MlKemCiphertext, MlKemKeyPair, MlKemSharedSecret};
+use kyber::{MlKemCiphertext, MlKemKeyPair, MlKemSharedSecret};
 use serde::{Deserialize, Serialize};
 //use serde_json::Result;
 use base65::*;
@@ -64,6 +64,7 @@ struct OBDmessage{
 }
 
 #[derive(Debug,Clone)]
+#[allow(unused)]
 pub struct SignatureKeys {
     private_key: Vec<u8>,
     public_key: Vec<u8>,
@@ -71,6 +72,7 @@ pub struct SignatureKeys {
     verifier_key: Vec<u8>,
     my_id: String,
 }
+#[warn(unused)]
 
 //Client and Receiver - steps 1 and 2
 pub async fn get_keys_from_control(addr: &str) -> Result<SignatureKeys, std::io::Error> {
