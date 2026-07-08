@@ -443,6 +443,7 @@ dependencies = [
  "base65",
  "core_utils_tokio",
  "lattice-kyber",
+ "serde",
  "serde_json",
  "tokio",
 ]

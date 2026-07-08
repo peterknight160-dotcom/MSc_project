@@ -79,7 +79,7 @@ fn gen_keys(sender: &str, verifier: &str) {
     let sender_payload = AuthenticationPackage {
         privatekey: sender_kp.private_key().to_vec(),
         publickey: sender_kp.public_key().to_vec(),
-        client_id: String::from("one"),
+        client_id: String::from("AZ40EUA"),
     };
 
     let sender_payload_bytes = postcard::to_allocvec(&sender_payload).unwrap();
@@ -112,7 +112,7 @@ fn gen_keys(sender: &str, verifier: &str) {
     // Package up public key, senderID, encrypt them and send to verifier.
     let verifier_payload = PubKeyPackage {
         publickey: sender_kp.public_key().to_vec(),
-        client_id: String::from("one"),
+        client_id: String::from("AZ40EUA"),
     };
 
     let verifier_payload_bytes = postcard::to_allocvec(&verifier_payload).unwrap();

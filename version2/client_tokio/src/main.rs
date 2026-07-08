@@ -55,7 +55,8 @@ async fn main() -> std::io::Result<()> {
         let input = get_input("What would you like to send a JSON to the receiver? (Type END to finish)").to_uppercase();
         nonce += 1;
         let line = json_reader.next().unwrap().unwrap();
-        let json_doc_to_send = json_doc_from_reader(line, &headers);
+        let json_doc_to_send = json_doc_from_reader(line, &headers, &signature_keys.my_id.as_str());
+
         match input.as_str()
         {
             "END" => break,

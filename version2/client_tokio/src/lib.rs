@@ -36,7 +36,7 @@ impl Iterator for CsvReader {
 
 // Function to convert a StringRecord to a JSON document.
 
- pub fn json_doc_from_reader ( line: StringRecord, headers: &StringRecord) -> String {
+ pub fn json_doc_from_reader ( line: StringRecord, headers: &StringRecord, vehicle_id: &str) -> String {
     
     let mut result= String::from("{\n");
     let mut first_element: bool = true;
@@ -45,6 +45,9 @@ impl Iterator for CsvReader {
     let mut hash_iter = headers.iter().zip(line.iter());
 
     while let Some ((key, value)) = hash_iter.next()  {
+
+        // Replace value = (null) with null 
+        let value = if value == "(null)" { "null" } else { value };
     
         let value_is_text  =! value.parse::<f64> ().is_ok();
          match first_element {
@@ -56,6 +59,8 @@ impl Iterator for CsvReader {
             let mut element: String=  "    \"".to_owned()  + key.strip_suffix("_unit").unwrap_or(key) + "\": {\n";
             element = element+  "        \"unit\": \"" + &value + "\",\n";
             if let Some ((_, value1 )) = hash_iter.next() {
+               // Replace value = (null) with null 
+                let value1 = if value1 == "(null)" { "0" } else { value1 };
        
                element = element +   "        \"value\": " + value1 + "\n    }";
             }
@@ -66,7 +71,7 @@ impl Iterator for CsvReader {
         else {
             // Regular element
             // Handle default values
-            let use_value = set_default_value(key, &value);
+            let use_value = set_default_value(key, &value, vehicle_id);
 
            
             let quote = String::from ("    \"");
@@ -90,13 +95,14 @@ impl Iterator for CsvReader {
     result
  }
 
- fn set_default_value ( key: &str, value: &str ) -> String{
+ fn set_default_value ( key: &str, value: &str, vehicle_id: &str) -> String{
     // Code to handle default values - mostly epoch
     let mut return_val = value.to_string();
     if key == "epoch" && value == "XXXX" {
         return_val= SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs().to_string();
-        
-
+    }
+    if key == "vehicle_id"  {
+        return_val= vehicle_id.to_string();
     }
     return_val
  }

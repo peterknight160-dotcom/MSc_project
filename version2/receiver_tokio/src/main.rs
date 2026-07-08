@@ -8,7 +8,9 @@ use kyber::{ML_KEM_512,  MlKemKeyPair};
 
 //use std::collections:: HashSet;
 
+
 use std::io::{ Error, ErrorKind };
+//use std::result;
 //use serde::{Deserialize, Serialize};
 use ::std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -17,6 +19,8 @@ use tokio::sync::mpsc;
 
 const RECEIVER_ADDR: &str = "127.0.0.1:8090";
 const RECEIVER_ADDR_CONTROL: &str = "127.0.0.1:8095";
+
+use receiver_tokio::VehicleTelemetry;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -126,6 +130,9 @@ async fn handle_connection(
             match s {
                 Ok(msg) => {
                     let text = check_message( &msg, Arc::clone(&nonces)).await?;
+                    // Step 6 - save the message to the database - currently the epoch, the speed value and units and the vehicle id
+
+                    println!("Received message: {}", text);
                     if text == "END" {
                         println!("Received END message, closing connection.");
                         let _ = tx.send(()).await;
@@ -145,7 +152,7 @@ async fn handle_connection(
 }
 
 pub async fn check_message(msg: &str, nonces: Arc<tokio::sync::Mutex<u64>>) -> std::io::Result<String> {
-    println!("Received message: {}", msg);
+    //println!("Received message: {}", msg);
     // Split off the nonce and timestamp from the message
     // Nonce is 28 characters long, timestamp is 12 characters long
     let nonce = &msg[..28];
@@ -155,8 +162,13 @@ pub async fn check_message(msg: &str, nonces: Arc<tokio::sync::Mutex<u64>>) -> s
     let nonce_u64 = nonce_decoded.parse::<u64>().unwrap();
    
   
-    let timestamp = &msg[28..40];   
-    let text = &msg[40..];
+    let _timestamp = &msg[28..40];   
+    // Return if end
+    let end = &msg[40..43];
+    if end == "END" {
+        return Ok("END".to_string());
+    }
+    let data = get_values_from_json(&msg[40..]).await.unwrap()  ;
     match check_nonce(&nonce_u64, Arc::clone(&nonces)).await {
         Ok(()) => {
           ();
@@ -168,8 +180,31 @@ pub async fn check_message(msg: &str, nonces: Arc<tokio::sync::Mutex<u64>>) -> s
             ));
         }
     }
+
+    let speed = match data.speed {
+        Some(ref s) => format!("{} {}", s.value, s.unit),
+        None => "N/A".to_string(),
+    };
+    let vehicle_id = match data.vehicle_id {
+        Some(ref v) => v.clone(),
+        None => "N/A".to_string(),
+    };
+    let epoch = match data.epoch {
+        Some(e) => e,
+        None => 0u64,
+    };
+
+
+
     
-    Ok(text.to_string())
+
+    
+    let return_val = format!(
+        "Speed: {}, Vehicle ID: {}, Epoch: {}",
+        speed, vehicle_id, epoch
+    );
+    
+    Ok(return_val)
 }
 
 pub async  fn check_nonce(nonce_u64: &u64, nonces: Arc<tokio::sync::Mutex<u64>>) -> std::io::Result<()> {
@@ -183,4 +218,14 @@ pub async  fn check_nonce(nonce_u64: &u64, nonces: Arc<tokio::sync::Mutex<u64>>)
     *largest_nonce = *nonce_u64;
  
     Ok(())
+}
+
+pub async fn get_values_from_json ( json: &str) -> std::io::Result<VehicleTelemetry> {  
+    let telemetry: VehicleTelemetry = serde_json::from_str(json).map_err(|e| {
+        Error::new(
+            ErrorKind::InvalidData,
+            format!("Failed to deserialize JSON: {}", e),
+        )
+    })?;
+    Ok(telemetry)
 }

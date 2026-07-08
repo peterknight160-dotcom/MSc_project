@@ -70,7 +70,7 @@ pub struct SignatureKeys {
     public_key: Vec<u8>,
     signing_key: Option<DilithiumKeyPair>,
     verifier_key: Vec<u8>,
-    my_id: String,
+    pub my_id: String,
 }
 #[warn(unused)]
 
