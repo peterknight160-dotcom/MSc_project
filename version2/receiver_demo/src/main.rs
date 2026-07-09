@@ -13,7 +13,7 @@ use ::std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::mpsc;
-use tokio_postgres::{NoTls, Error as PgError};
+//use tokio_postgres::{NoTls, Error as PgError};
 
 const RECEIVER_ADDR: &str = "127.0.0.1:8090";
 const RECEIVER_ADDR_CONTROL: &str = "127.0.0.1:8095";
@@ -33,22 +33,11 @@ async fn main() -> std::io::Result<()> {
     println!("Have both keys, ready to rock and roll");
 
     // Main receiver loop
-    let (client, connection) =
-        tokio_postgres::connect("host=localhost user=vehicle password=obdvehicle port=5468 dbname=demo_odb", NoTls)
-            .await
-            .map_err(|e| {
-                eprintln!("Failed to connect to the database: {}", e);
-                Error::new(ErrorKind::Other, "Database connection failed")
-            })?;
+   
 
     // The connection object performs the actual communication with the database,
     // so spawn it off to run on its own.
-    tokio::spawn(async move {
-        if let Err(e) = connection.await {
-            eprintln!("connection error: {}", e);
-        }
-    });
-    let client = Arc::new(client);
+   
 
 
 
@@ -81,10 +70,10 @@ async fn main() -> std::io::Result<()> {
             Ok((socket, addr)) = listener.accept() => {
                 let signature_keys = Arc::clone(&signature_keys);
                 let tx = tx.clone();
-                let value = client.clone();
+         
                 tokio::spawn(async move {
 
-                    if let Err(e) = handle_connection(socket, signature_keys, tx,nonces, Arc::clone(&value)).await {
+                    if let Err(e) = handle_connection(socket, signature_keys, tx,nonces).await {
                         eprintln!("Error handling {}: {}", addr, e);
                     }
                 });
@@ -98,7 +87,7 @@ async fn handle_connection(
     signature_keys: Arc<SignatureKeys>,
     tx: mpsc::Sender<()>,
     nonces: Arc<tokio::sync::Mutex<u64>>,
-    client: Arc<tokio_postgres::Client>,
+   
 ) -> std::io::Result<()> {
     
         // Step 3  - Get connection request from client
@@ -150,7 +139,12 @@ async fn handle_connection(
                         return  Ok(());
                     }
                     // Log message to database
-                    log_message_to_database(Arc::clone(&client), &telemetry_data).await?;
+                    //log_message_to_database(Arc::clone(&client), &telemetry_data).await?;
+                    // print the message
+                    println!("Vehicle ID: {:?}", telemetry_data.vehicle_id.as_ref().unwrap ());
+                    println!("Speed: {}, {} ", telemetry_data.speed.as_ref().unwrap().value, telemetry_data.speed.as_ref().unwrap() .unit);  
+                    println!("Epoch: {:?}", telemetry_data.epoch.as_ref().unwrap());
+
                 }
                 Err(e) => {
                     eprintln!("Error receiving message: {}", e);
@@ -229,15 +223,6 @@ pub async fn check_nonce(
     Ok(())
 }
 
-/* pub async fn get_values_from_json(json: &str) -> std::io::Result<VehicleTelemetry> {
-    let telemetry: VehicleTelemetry = serde_json::from_str(json).map_err(|e| {
-        Error::new(
-            ErrorKind::InvalidData,
-            format!("Failed to deserialize JSON: {}", e),
-        )
-    })?;
-    Ok(telemetry)
-} */
 
 
 

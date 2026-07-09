@@ -2,10 +2,11 @@ use std::io::{self, Error, ErrorKind};
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
+use tokio_postgres::{NoTls, Error as PgError};
 use postcard;
 
 use  rand::*; 
-
+ use std::sync::Arc;
 
 
 #[macro_use]
@@ -74,6 +75,56 @@ pub struct SignatureKeys {
 }
 #[warn(unused)]
 
+
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Measurement {
+    pub unit: String,
+    pub value: f64,
+}
+
+//Need to make fields can be optional, as not all fields will be present in the JSON data.
+#[derive(Debug, Clone, Deserialize)]
+pub struct VehicleTelemetry {
+    pub air_intake_temp: Option<Measurement>,
+    pub altitude: Option<Measurement>,
+    pub ambient_air_temp: Option<Measurement>,
+    pub barometric_pressure: Option<Measurement>,
+
+    pub dtc_number: Option<String>,
+
+    pub engine_coolant_temp: Option<Measurement>,
+    pub engine_load_value: Option<f64>,
+    pub engine_rpm: Option<Measurement>,
+    pub engine_runtime: Option<String>,
+
+    pub epoch: Option<u64>,
+    pub equiv_ratio_value: Option<f64>,
+    pub fuel_level_value: Option<f64>,
+
+    pub intake_manifold_pressure: Option<Measurement>,
+
+    pub latitude: Option<f64>,
+    pub longitude: Option<f64>,
+
+    pub maf: Option<Measurement>,
+
+    #[serde(rename = "short term fuel trim bank 1")]
+    pub short_term_fuel_trim_bank_1: Option<f64>,
+
+    pub speed: Option<Measurement>,
+
+    pub throttle_pos_value: Option<f64>,
+    pub timing_advance_value: Option<f64>,
+
+    pub vehicle_id: Option<String>,
+}
+#[derive(Debug, Clone)]
+pub struct VehicleTelemetryData {
+    pub speed: Option<Measurement>,
+    pub vehicle_id: Option<String>,
+    pub epoch: Option<u64>,
+}
 //Client and Receiver - steps 1 and 2
 pub async fn get_keys_from_control(addr: &str) -> Result<SignatureKeys, std::io::Error> {
     let control_aes = base64_to_bytes(AES256).unwrap();
@@ -197,21 +248,23 @@ pub async fn receive_signed_rq(signature_keys: &SignatureKeys, received: &[u8]) 
         let signed_message: SignedRQ = postcard::from_bytes(received).unwrap();
         let signature = signed_message.signature;
 
-        if MlDsaKeyPair::verify(
+        // Check keypair signature and return the text if valid, else return an error
+
+
+       if MlDsaKeyPair::verify(
             &signature_keys.verifier_key,
             &signature,
             &signed_message.text,
             &[],
             ML_DSA_44,) {
-              return Ok(String::from_utf8(signed_message.text).unwrap());
+              Ok(String::from_utf8(signed_message.text).unwrap())
         } else {
-            return Err(Error::new(
-                ErrorKind::Other,
+           Err(Error::other(
                 "Authorisation Failed in receive_signed_rq ",
-            ));
+            ))
         }
-    
-}
+    }
+   
 
 //Receiver  Step 4
 
@@ -257,12 +310,11 @@ stream.read_exact(&mut buf).await?;
             &[],
             ML_DSA_44,
         ) {
-            return Ok(signed_message.pub_key);
+             Ok(signed_message.pub_key)
         } else {
-            return Err(Error::new(
-                ErrorKind::Other,
+                 Err(Error::other(
                 "Authorisation Failed in receive_signed_rq ",
-            ));
+            ))
         }
 }
 
@@ -332,5 +384,25 @@ pub fn generate_nonce() -> Vec<u8> {
 }
 
 
-// Nonce and timestamp utilities 
+// Database routines
 
+pub async fn log_message_to_database(client: Arc<tokio_postgres::Client>, data : &VehicleTelemetryData) -> Result<(), io::Error> {
+    let vehicle = data.vehicle_id.clone().unwrap_or_else(|| "Unknown".to_string());
+    let speed = data.speed.as_ref().map_or(0.0, |s| s.value);
+    let speed_unit = data.speed.as_ref().map_or("Unknown".to_string(), |s| s.unit.clone());
+    let epoch = data.epoch.unwrap_or(0) as i64;    
+
+    
+//let speed = speed as f64; // Ensure speed is a f64
+
+    client
+        .execute(
+            "INSERT INTO captures (vehicle, epoch, speed, speed_unit) VALUES ($1, $2, $3, $4)",
+            &[ &vehicle, &epoch, &speed, &speed_unit ],
+        )
+        .await
+        .map_err(|e| Error::new(ErrorKind::Other, format!("Database error: {:?}", e)))?;
+
+
+    Ok(())
+}
