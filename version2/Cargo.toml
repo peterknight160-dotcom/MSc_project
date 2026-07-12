@@ -1,4 +1,4 @@
 [workspace]
 resolver = "3"
-members =  ["base65", "client", "client_tokio","control", "core_utils", "core_utils_tokio", "receiver", "receiver_tokio", "receiver_demo"]
+members =  ["base65", "client", "client_testing","client_tokio","control", "core_utils", "core_utils_tokio", "receiver", "receiver_tokio", "receiver_demo"]
 

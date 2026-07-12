@@ -2,7 +2,7 @@ use std::io::{self, Error, ErrorKind};
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
-use tokio_postgres::{NoTls, Error as PgError};
+//use tokio_postgres::{NoTls, Error as PgError};
 use postcard;
 
 use  rand::*; 
@@ -12,7 +12,7 @@ use  rand::*;
 #[macro_use]
 mod my_macros;
 pub mod nonce;
-pub use nonce::{generate_nonce_base64, get_time_as_millis_base64, return_time_as_millis_from_base64};
+pub use nonce::*;
 
 include!("keys.rs");
 
@@ -67,10 +67,10 @@ struct OBDmessage{
 #[derive(Debug,Clone)]
 #[allow(unused)]
 pub struct SignatureKeys {
-    private_key: Vec<u8>,
-    public_key: Vec<u8>,
-    signing_key: Option<DilithiumKeyPair>,
-    verifier_key: Vec<u8>,
+    pub private_key: Vec<u8>,
+    pub public_key: Vec<u8>,
+    pub signing_key: Option<DilithiumKeyPair>,
+    pub verifier_key: Vec<u8>,
     pub my_id: String,
 }
 #[warn(unused)]
@@ -245,7 +245,11 @@ pub async fn send_signed_rq(
 // Receiver Step3
 pub async fn receive_signed_rq(signature_keys: &SignatureKeys, received: &[u8]) -> Result<String, io::Error> {
     
-        let signed_message: SignedRQ = postcard::from_bytes(received).unwrap();
+      
+    let signed_message: SignedRQ =
+        postcard::from_bytes(received)
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+
         let signature = signed_message.signature;
 
         // Check keypair signature and return the text if valid, else return an error
@@ -259,8 +263,10 @@ pub async fn receive_signed_rq(signature_keys: &SignatureKeys, received: &[u8]) 
             ML_DSA_44,) {
               Ok(String::from_utf8(signed_message.text).unwrap())
         } else {
-           Err(Error::other(
-                "Authorisation Failed in receive_signed_rq ",
+           Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            "Authorisation failed in receive_signed_rq",
+
             ))
         }
     }
@@ -344,18 +350,18 @@ pub fn get_ss_from_ct(buffer: &[u8], key_pair: &MlKemKeyPair ) -> Result<MlKemSh
 pub fn receive_message (aes_key: &[u8], received: &[u8]) -> Result<String, io::Error> {
  
         let deserialized: OBDmessage =postcard::from_bytes(received).unwrap();
-             let byte_stream = aes_dec_ecb(deserialized.ciphertext.as_slice(), &aes_key,  Some("PKCS7"))
-                .expect("Decrypt failed");
 
-
-
-        let text = match  String::from_utf8 (byte_stream) {
-            Ok(v) => v,
-            Err (e) => panic!( "Got {} ",e)
-        };
-    
-    Ok(text)
-
+        // Decrypt the ciphertext and handle any resulting errors using match
+            match aes_dec_ecb(deserialized.ciphertext.as_slice(), &aes_key,  Some("PKCS7")) {
+                Ok(byte_stream) => {
+                    match String::from_utf8(byte_stream) {
+                        Ok(v) => return  Ok(v),
+                        Err(e) => return Err(io::Error::new(io::ErrorKind::InvalidData, format!("UTF-8 conversion error: {}", e))),
+                    }
+                },
+                Err(e) => return Err(io::Error::new(io::ErrorKind::InvalidData, format!("Decryption failed: {}", e))),
+             
+            }
 }
 
 //Client Step 7
@@ -392,9 +398,6 @@ pub async fn log_message_to_database(client: Arc<tokio_postgres::Client>, data :
     let speed_unit = data.speed.as_ref().map_or("Unknown".to_string(), |s| s.unit.clone());
     let epoch = data.epoch.unwrap_or(0) as i64;    
 
-    
-//let speed = speed as f64; // Ensure speed is a f64
-
     client
         .execute(
             "INSERT INTO captures (vehicle, epoch, speed, speed_unit) VALUES ($1, $2, $3, $4)",
@@ -403,6 +406,23 @@ pub async fn log_message_to_database(client: Arc<tokio_postgres::Client>, data :
         .await
         .map_err(|e| Error::new(ErrorKind::Other, format!("Database error: {:?}", e)))?;
 
+
+    Ok(())
+}
+
+pub async fn log_authentication_to_database ( client: Arc<tokio_postgres::Client>, dongle : & str, message: &str) -> Result<(), io::Error> {
+   println! ( "Logging authentication to database: dongle: {}, message: {}", dongle, message);
+
+    match   client
+        .execute(
+            "INSERT INTO logging.authentication (client, result) VALUES ($1, $2)",
+            &[&dongle, &message],
+        )
+        .await {
+            Ok(_) => (),
+            Err(e) => println!("Database error: {:?}", e),
+        }
+        
 
     Ok(())
 }
