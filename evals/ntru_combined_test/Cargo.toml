@@ -1,0 +1,10 @@
+[package]
+name = "ntru_combined_test"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ntrulp = { version = "0.2.5", features = ["ntrup653"] } 
+env = "1.0.1"
+useful_stats = { path = "../useful_stats" }
+rand = "0.10.2"

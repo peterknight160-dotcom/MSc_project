@@ -1,0 +1,19 @@
+[package]
+name = "core_utils_tokio"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+base65 = { path = "../base65" }
+
+dilithium-rs = { version ="0.2.0", features = ["serde"]}
+lattice-kyber = { version = "0.1", features = ["getrandom","serde"] }
+soft-aes = "0.2.2"
+
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.150"
+tokio = { version = "1", features = ["full"] }
+postcard = { version = "1", features = ["alloc"] }
+rand = "0.10.1"  
+tokio-postgres = { version = "0.7", features = ["with-serde_json-1"] }
+chrono = { version = "0.4", features = ["serde"] }

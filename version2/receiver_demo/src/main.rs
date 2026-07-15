@@ -88,6 +88,8 @@ async fn handle_connection(
     let mut buffer = vec![0; len as usize];
     let _bytes_read = socket.read_exact(&mut buffer).await?;
 
+    println!("Received connection request from client: " );
+
     //let received = received_string!(buffer, bytes_read);
 
     let _s = receive_signed_rq(&signature_keys, &buffer).await;
@@ -98,13 +100,16 @@ async fn handle_connection(
     let s = ml_key_to_send(&signature_keys, &key_pair)?;
     socket.write_u32(s.len() as u32).await?;
     socket.write_all(&s).await?;
-
+  
+    println!("Sent ML key to client: " );
     // Step 5  - Receive ciphertext from client and decapsulate to get shared secret
 
     let len = socket.read_u32().await?;
     let mut buffer = vec![0; len as usize];
     let bytes_read = socket.read_exact(&mut buffer).await?;
     //let received = received_string!(buffer, bytes_read);
+
+    println!("Received ciphertext from client: " );
 
     let ss_receiver = get_ss_from_ct(&buffer[..bytes_read], &key_pair).unwrap();
 
