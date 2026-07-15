@@ -24,6 +24,9 @@ async fn main() -> std::io::Result<()> {
 
     println!("Have both keys, ready to rock and roll");
 
+    // Sleep for a second to allow the receiver to start up
+    tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+
     // Now to do the performance test
 
     let eloops = env::var("LOOPS").ok(); //Get result and convert option
@@ -36,13 +39,13 @@ async fn main() -> std::io::Result<()> {
 
     let mut auth_time_hash: BTreeMap<u128, u32> = BTreeMap::new();
 
-    for _ in 0..nloops {
+    for i in 0..nloops+10 {
           let start_encrypt = Instant::now();
         let mut stream = TcpStream::connect(RECEIVER_ADDR).await?;
 
         //Step 3
 
-        println!("Commence authentication with the receiver");
+
 
         let _s = match send_signed_rq(&signature_keys, &mut stream).await {
             Ok(v) => v,
@@ -54,20 +57,23 @@ async fn main() -> std::io::Result<()> {
         //let s = get_ml_keys(&signature_keys, &mut stream).await;
         let pub_key = get_ml_keys(&signature_keys, &mut stream).await.unwrap();
 
-        println!("Got the ML Key from the receiver, ready to compute ciphertext and shared secret");
+
 
         //Step 5
 
         let (ct, ss_sender) = kyber::safe_encaps(ML_KEM_512, pub_key.as_slice()).unwrap();
-        let shared_secret = ss_sender.as_bytes();
+        let _shared_secret = ss_sender.as_bytes();
 
-        let s = send_ciphertext(ct, &mut stream).await;
-        if s.is_ok() {
-            println!("Got {}", s.unwrap());
-        }
+        let _ = send_ciphertext(ct, &mut stream).await;
+ 
 
         let auth_time = start_encrypt.elapsed().as_micros();
-        *auth_time_hash.entry(auth_time).or_insert(0) += 1;
+         
+        //println!("Auth time: {} microseconds", auth_time);
+        if i >= 10 {
+            *auth_time_hash.entry(auth_time).or_insert(0) += 1;
+        }
+        
 
         // Disconnect from the receiver
         let _ = stream.shutdown().await;

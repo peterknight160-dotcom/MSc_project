@@ -1150,6 +1150,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "63b8176103e19a2643978565ca18b50549f6101881c443590420e4dc998a3c69"
 
 [[package]]
+name = "receiver_auth_pqc"
+version = "0.1.0"
+dependencies = [
+ "base65",
+ "chrono",
+ "core_utils_tokio",
+ "lattice-kyber",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-postgres",
+]
+
+[[package]]
 name = "receiver_tokio"
 version = "0.1.0"
 dependencies = [
