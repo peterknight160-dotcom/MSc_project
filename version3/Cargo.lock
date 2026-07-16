@@ -155,6 +155,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "client_auth_classic"
+version = "0.1.0"
+dependencies = [
+ "base65",
+ "core_utils_classic",
+ "csv",
+ "ed25519-dalek",
+ "getrandom 0.4.3",
+ "tokio",
+ "x25519-dalek",
+]
+
+[[package]]
 name = "client_auth_pqc"
 version = "0.1.0"
 dependencies = [
@@ -295,6 +308,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "core_utils_classic"
+version = "0.1.0"
+dependencies = [
+ "base65",
+ "chrono",
+ "ed25519-dalek",
+ "getrandom 0.4.3",
+ "postcard",
+ "rand",
+ "serde",
+ "serde_json",
+ "soft-aes",
+ "tokio",
+ "tokio-postgres",
+ "x25519-dalek",
+]
+
+[[package]]
 name = "core_utils_pqc"
 version = "0.1.0"
 dependencies = [
@@ -424,6 +455,7 @@ dependencies = [
  "fiat-crypto",
  "rand_core",
  "rustc_version",
+ "serde",
  "subtle",
  "zeroize",
 ]
@@ -1243,6 +1275,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "63b8176103e19a2643978565ca18b50549f6101881c443590420e4dc998a3c69"
 
 [[package]]
+name = "receiver_auth_classic"
+version = "0.1.0"
+dependencies = [
+ "base65",
+ "chrono",
+ "core_utils_classic",
+ "ed25519-dalek",
+ "getrandom 0.4.3",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-postgres",
+ "x25519-dalek",
+]
+
+[[package]]
 name = "receiver_auth_pqc"
 version = "0.1.0"
 dependencies = [
@@ -1909,6 +1957,18 @@ name = "wit-bindgen"
 version = "0.57.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
+
+[[package]]
+name = "x25519-dalek"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7e8131a03190127fb2263afc72b322ecadae46b6ff8c6f399ff5d02f5559af6"
+dependencies = [
+ "curve25519-dalek",
+ "rand_core",
+ "serde",
+ "zeroize",
+]
 
 [[package]]
 name = "yeslogic-fontconfig-sys"

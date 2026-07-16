@@ -1,11 +1,16 @@
 use base65::*;
-use core_utils_tokio::*;
+use core_utils_classic::*;
 const ADDR: &str = "127.0.0.1:8080";
 const RECEIVER_ADDR: &str = "127.0.0.1:8090";
 const JSON_FILE: &str = "JSON.csv";
-use client_tokio::{CsvReader, json_doc_from_reader};
-use kyber::ML_KEM_512;
+use client_auth_classic::{CsvReader, json_doc_from_reader};
+
+use ed25519_dalek::{ SigningKey,VerifyingKey};
+use x25519_dalek::{EphemeralSecret, PublicKey};
+use getrandom::{SysRng, rand_core::UnwrapErr};
+
 use std::io::{self};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 
 #[tokio::main]
@@ -18,6 +23,8 @@ async fn main() -> std::io::Result<()> {
     // Now do stuff with them
 
     println!("Have both keys, ready to rock and roll");
+
+  
 
     let mut stream = TcpStream::connect(RECEIVER_ADDR).await?;
 
@@ -33,23 +40,29 @@ async fn main() -> std::io::Result<()> {
     //Step 4
 
     //let s = get_ml_keys(&signature_keys, &mut stream).await;
-    let pub_key = get_ml_keys(&signature_keys, &mut stream).await.unwrap();
+    let pub_key = get_ec25519_keys(&signature_keys, &mut stream).await.unwrap();
 
-    println!("Got the ML Key from the receiver, ready to compute ciphertext and shared secret");
+    println!("Got the EC25519 Key from the receiver, ready to compute ciphertext and shared secret");
 
     //Step 5
 
-    let (ct, ss_sender) = kyber::safe_encaps(ML_KEM_512, pub_key.as_slice()).unwrap();
-    let shared_secret = ss_sender.as_bytes();
+    // Generate EC25519 key pair for the sender
+
+    let sender_secret = EphemeralSecret::random_from_rng( &mut UnwrapErr(SysRng));
+    let sender_public = PublicKey::from(&sender_secret);
     
-    let s = send_ciphertext(ct, &mut stream).await;
-    if s.is_ok() {
-        println!("Got {}", s.unwrap());
-    }
+    let s = ec25519_key_to_send(&signature_keys, &sender_public)?;
+    stream.write_u32(s.len() as u32).await?;
+    stream.write_all(&s).await?;
+
+
+    let shared_secret = sender_secret.diffie_hellman(&pub_key) ;
+
+  
 
     println!("Sent ciphertext to the receiver, so now we both have the shared secret" );
 
-    println!("Shared Secret is {:?}", base65::base64_from_bytes(shared_secret).unwrap());
+    println!("Shared Secret is {:?}", base65::base64_from_bytes(shared_secret.as_bytes()).unwrap());
     //    Step 7 Loop around, sending stuff to the receiver
     // Set up the json file to send to the receiver
 

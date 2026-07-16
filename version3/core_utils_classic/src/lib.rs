@@ -11,45 +11,47 @@ use std::sync::Arc;
 
 
 
-include!("keys.rs");
+//include!("keys.rs");
 
-use dilithium::{DilithiumKeyPair, DilithiumSignature, ML_DSA_44,  MlDsaKeyPair};
-use kyber::{MlKemCiphertext, MlKemKeyPair, MlKemSharedSecret};
+
+
+use ed25519_dalek::{ SigningKey,VerifyingKey,Signer,Verifier}; // Used for signing and verifying messages
+use x25519_dalek::{EphemeralSecret, PublicKey};  // Used for key exchange
 use serde::{Deserialize, Serialize};
 //use serde_json::Result;
 
 use soft_aes::aes::{aes_dec_ecb, aes_enc_ecb};
 #[derive(Serialize, Deserialize, Debug)]
 struct AuthenticationPackage {
-    privatekey: Option<Vec<u8>>,
-    publickey: Vec<u8>,
+    privatekey: Option<SigningKey>,
+    publickey: VerifyingKey,
     payload: PayloadType,
     client_id: String, // client_id not used by the receiver
 }
-#[derive(Serialize, Deserialize, Debug)]
+/* #[derive(Serialize, Deserialize, Debug)]
 struct PubKeyPackage {
-    publickey: Vec<u8>,
+    publickey: VerifyingKey,
     client_id: String, // Not used by the client.
-}
+} */
 #[derive(Serialize, Deserialize, Debug)]
 struct SignedCipherText {
     ciphertext: Vec<u8>,
-    signature: DilithiumSignature,
+    signature: ed25519_dalek::Signature,
     payload: PayloadType,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 struct SignedRQ {
     text: Vec<u8>,
-    signature: DilithiumSignature,
+    signature: ed25519_dalek::Signature,
 }
 
-type KyberPubKey = Vec<u8>;
+//type KyberPubKey = Vec<u8>;
 
 #[derive(Serialize, Deserialize, Debug)]
-struct SignedKyberPubKey {
-    pub_key: KyberPubKey,
-    signature: DilithiumSignature,
+struct SignedPubKey {
+    pub_key: PublicKey,
+    signature: ed25519_dalek::Signature,
 }
 #[derive(Serialize, Deserialize, Debug)]
 enum PayloadType {
@@ -65,10 +67,9 @@ struct OBDmessage {
 #[derive(Debug, Clone)]
 #[allow(unused)]
 pub struct SignatureKeys {
-    pub private_key: Vec<u8>,
-    pub public_key: Vec<u8>,
-    pub signing_key: Option<DilithiumKeyPair>,
-    pub verifier_key: Vec<u8>,
+      pub public_key: VerifyingKey,
+    pub signing_key: Option<SigningKey>,
+    pub verifier_key: VerifyingKey,
     pub my_id: String,
 }
 #[warn(unused)]
@@ -126,10 +127,10 @@ pub async fn get_keys_from_control(addr: &str) -> Result<SignatureKeys, std::io:
     let listener = TcpListener::bind(addr).await?;
     println!("Listening on {} ...", addr);
 
-    let mut my_private_key: Vec<u8> = Vec::new();
-    let mut my_public_key: Vec<u8> = Vec::new();
-    let mut my_verifying_key: Vec<u8> = Vec::new();
-    let mut my_signing_key: Option<DilithiumKeyPair> = None;
+
+    let mut my_public_key: VerifyingKey = VerifyingKey::from_bytes(&[0u8; 32]).unwrap();
+    let mut my_verifying_key: VerifyingKey = VerifyingKey::from_bytes(&[0u8; 32]).unwrap();
+    let mut my_signing_key: Option<SigningKey> = None;
     let mut have_signing_key: bool = false;
     let mut have_verifier_key: bool = false;
     let mut my_id: String = String::new();
@@ -156,17 +157,11 @@ pub async fn get_keys_from_control(addr: &str) -> Result<SignatureKeys, std::io:
 
         match deserialized.payload {
             PayloadType::SenderKey => {
-                if let Some(private_key) = deserialized.privatekey {
-                    my_private_key = private_key;
-                }
-
+            
                 my_public_key = deserialized.publickey;
                 my_id = deserialized.client_id;
 
-                my_signing_key = Some(
-                    DilithiumKeyPair::from_keys(&my_private_key, &my_public_key, ML_DSA_44)
-                        .expect("Failed to create signing_key"),
-                );
+                my_signing_key = deserialized.privatekey;
                 have_signing_key = true;
             }
             PayloadType::VerifierKey => {
@@ -182,7 +177,6 @@ pub async fn get_keys_from_control(addr: &str) -> Result<SignatureKeys, std::io:
     }
 
     Ok(SignatureKeys {
-        private_key: my_private_key,
         public_key: my_public_key,
         signing_key: my_signing_key,
         verifier_key: my_verifying_key,
@@ -196,12 +190,13 @@ pub async fn send_signed_rq(
     stream: &mut TcpStream,
 ) -> Result<String, io::Error> {
     let text = "Ready to send".as_bytes();
-    let signature = signature_keys
-        .signing_key
-        .as_ref()
-        .unwrap()
-        .sign(text, &[])
-        .unwrap();
+
+    // use ED25519 signature to sign the text and send it to the receiver
+
+    let signing_key = signature_keys.signing_key.as_ref().unwrap();
+
+    let signature = signing_key.sign(text);
+
     let signed_message = SignedRQ {
         text: text.to_vec(),
         signature,
@@ -224,40 +219,58 @@ pub async fn receive_signed_rq(
     let signature = signed_message.signature;
 
     // Check keypair signature and return the text if valid, else return an error
+  
 
-    if MlDsaKeyPair::verify(
-        &signature_keys.verifier_key,
-        &signature,
-        &signed_message.text,
-        &[],
-        ML_DSA_44,
-    ) {
+     let verifier_key = &signature_keys.verifier_key;
+     if verifier_key.verify(&signed_message.text, &signature).is_ok() {
         Ok(String::from_utf8(signed_message.text).unwrap())
     } else {
         Err(io::Error::new(
             io::ErrorKind::PermissionDenied,
             "Authorisation failed in receive_signed_rq",
         ))
+
     }
 }
-
 //Receiver  Step 4
 
-pub fn ml_key_to_send(
+/*
+use x25519_dalek::{EphemeralSecret, PublicKey};
+
+let alice_secret = EphemeralSecret::random();
+let alice_public = PublicKey::from(&alice_secret);
+
+
+ⓘ
+
+let bob_secret = EphemeralSecret::random();
+let bob_public = PublicKey::from(&bob_secret);
+
+
+
+let alice_shared_secret = alice_secret.diffie_hellman(&bob_public);
+
+
+
+let bob_shared_secret = bob_secret.diffie_hellman(&alice_public);
+*/
+
+
+// Key generated in receiver, this module signs and serializes it, and returns to receiver
+pub fn ec25519_key_to_send(
     signature_keys: &SignatureKeys,
-    key_pair: &MlKemKeyPair,
+    receiver_public: &PublicKey,
 ) -> Result<Vec<u8>, io::Error> {
+
+
     //let my_text = "Have some ML_KEM_keys".as_bytes();
 
-    let pub_key = key_pair.public_key();
-    let signature = signature_keys
-        .signing_key
-        .as_ref()
-        .unwrap()
-        .sign(pub_key, &[])
-        .unwrap();
-    let signed_message = SignedKyberPubKey {
-        pub_key: pub_key.to_vec(),
+     let signing_key = signature_keys.signing_key.as_ref().unwrap();
+
+    let signature = signing_key.sign(receiver_public.as_bytes());
+
+    let signed_message = SignedPubKey {
+        pub_key: receiver_public.clone(),
         signature,
     };
     let signed_message = postcard::to_allocvec(&signed_message).unwrap();
@@ -266,56 +279,37 @@ pub fn ml_key_to_send(
 }
 
 //Client Step 4
-pub async fn get_ml_keys(
+pub async fn get_ec25519_keys(
     signature_keys: &SignatureKeys,
     stream: &mut TcpStream,
-) -> Result<KyberPubKey, io::Error> {
+) -> Result<PublicKey, io::Error> {
     let len = stream.read_u32().await?;
 
     let mut buf = vec![0u8; len as usize];
     stream.read_exact(&mut buf).await?;
 
-    let signed_message: SignedKyberPubKey = postcard::from_bytes(&buf).unwrap();
+    let signed_message: SignedPubKey = postcard::from_bytes(&buf).unwrap();
     let signature = signed_message.signature;
 
-    if MlDsaKeyPair::verify(
-        &signature_keys.verifier_key,
-        &signature,
-        &signed_message.pub_key,
-        &[],
-        ML_DSA_44,
-    ) {
+    
+     let verifier_key = signature_keys.verifier_key;
+     if verifier_key.verify(signed_message.pub_key.as_bytes(), &signature).is_ok() {
         Ok(signed_message.pub_key)
     } else {
-        Err(Error::other("Authorisation Failed in receive_signed_rq "))
+        Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            "Authorisation failed in receive_signed_rq",
+        ))
+
     }
 }
 
 //Client Step 5
+// As receiver Step 4
 
-pub async fn send_ciphertext(
-    ct: MlKemCiphertext,
-    stream: &mut TcpStream,
-) -> Result<String, io::Error> {
-    let message_bytes = postcard::to_allocvec(&ct).unwrap();
-    let len = message_bytes.len() as u32;
-    stream.write_u32(len).await?;
-    stream.write_all(&message_bytes).await?;
-
-    Ok(String::from("Ok"))
-}
 //Receiver Step 5
-pub fn get_ss_from_ct(
-    buffer: &[u8],
-    key_pair: &MlKemKeyPair,
-) -> Result<MlKemSharedSecret, io::Error> {
-    let ct: MlKemCiphertext;
+// As client Step 4
 
-    ct = postcard::from_bytes(buffer).unwrap();
-    let ss_receiver = key_pair.decaps(&ct).unwrap();
-
-    Ok(ss_receiver)
-}
 
 //Receiver Step 7
 
