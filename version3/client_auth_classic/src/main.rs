@@ -1,9 +1,9 @@
-use base65::*;
+//use base65::*;
 use core_utils_classic::*;
 const ADDR: &str = "127.0.0.1:8080";
 const RECEIVER_ADDR: &str = "127.0.0.1:8090";
-const JSON_FILE: &str = "JSON.csv";
-use client_auth_classic::{CsvReader, json_doc_from_reader};
+//const JSON_FILE: &str = "JSON.csv";
+//use client_auth_classic::{CsvReader, json_doc_from_reader};
 
 use ed25519_dalek::{ SigningKey,VerifyingKey};
 use x25519_dalek::{EphemeralSecret, PublicKey};
@@ -12,6 +12,11 @@ use getrandom::{SysRng, rand_core::UnwrapErr};
 use std::io::{self};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
+
+use std::collections::BTreeMap;
+use std::time::Instant;
+use useful_stats::*;
+
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -24,13 +29,32 @@ async fn main() -> std::io::Result<()> {
 
     println!("Have both keys, ready to rock and roll");
 
-  
+       println!("Have both keys, ready to rock and roll");
 
-    let mut stream = TcpStream::connect(RECEIVER_ADDR).await?;
+    // Sleep for a second to allow the receiver to start up
+    tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+
+        // Now to do the performance test
+
+    let eloops = env::var("LOOPS").ok(); //Get result and convert option
+    let nloops: u32;
+
+    match eloops.is_some() {
+        true => nloops = eloops.unwrap().parse::<u32>().unwrap(),
+        false => nloops = 10,
+    }
+
+    let mut auth_time_hash: BTreeMap<u128, u32> = BTreeMap::new();
+
+      for i in 0..nloops+10 {
+          let start_encrypt = Instant::now();
+        let mut stream = TcpStream::connect(RECEIVER_ADDR).await?;
+
+   
 
     //Step 3
 
-    println!("Commence authentication with the receiver");
+    //println!("Commence authentication with the receiver");
 
     let _s = match send_signed_rq(&signature_keys, &mut stream).await {
         Ok(v) => v,
@@ -42,7 +66,7 @@ async fn main() -> std::io::Result<()> {
     //let s = get_ml_keys(&signature_keys, &mut stream).await;
     let pub_key = get_ec25519_keys(&signature_keys, &mut stream).await.unwrap();
 
-    println!("Got the EC25519 Key from the receiver, ready to compute ciphertext and shared secret");
+    //println!("Got the EC25519 Key from the receiver, ready to compute ciphertext and shared secret");
 
     //Step 5
 
@@ -60,38 +84,32 @@ async fn main() -> std::io::Result<()> {
 
   
 
-    println!("Sent ciphertext to the receiver, so now we both have the shared secret" );
+    
 
-    println!("Shared Secret is {:?}", base65::base64_from_bytes(shared_secret.as_bytes()).unwrap());
-    //    Step 7 Loop around, sending stuff to the receiver
-    // Set up the json file to send to the receiver
+    //println!("Shared Secret is {:?}", base65::base64_from_bytes(shared_secret.as_bytes()).unwrap());
+            let auth_time = start_encrypt.elapsed().as_micros();
+         
+        //println!("Auth time: {} microseconds", auth_time);
+        if i >= 10 {
+            *auth_time_hash.entry(auth_time).or_insert(0) += 1;
+        }
+        
 
-    let mut json_reader = CsvReader::set_up(JSON_FILE).unwrap();
-    let headers = json_reader.headers().clone();
-
-    let mut nonce: u64 = 0;
-    loop {
-        let input =
-            get_input("What would you like to send a JSON to the receiver? (Type END to finish)")
-                .to_uppercase();
-        nonce += 1;
-        let line = json_reader.next().unwrap().unwrap();
-        let json_doc_to_send = json_doc_from_reader(line, &headers, &signature_keys.my_id.as_str());
-
-        match input.as_str() {
-            "END" => break,
-            "YES" | "Y" => send(json_doc_to_send, shared_secret, &nonce, &mut stream).await,
-            _ => (),
-        };
+        // Disconnect from the receiver
+        let _ = stream.shutdown().await;
     }
-    send(String::from("END"), shared_secret, &nonce, &mut stream).await;
-    // Wait for 100ms
-    std::thread::sleep(std::time::Duration::from_millis(100));
 
+        let stats_auth = stats_from_btree(&auth_time_hash, "ED25519 Authentication");
+    // Get mean + 2 std devs
+    let twosigma = stats_auth.mean + 2.0 * stats_auth.std_dev;
+
+    let _ = draw_histogram_from_btree(&auth_time_hash, "ED25519_Authentication", twosigma);
+    println!(        "Stats {} ",stats_auth           );
+  
     Ok(())
 }
 
-fn get_input(prompt: &str) -> String {
+/* fn get_input(prompt: &str) -> String {
     let mut input = String::new();
     println!("{}", prompt);
 
@@ -111,4 +129,4 @@ async fn send(input: String, aes_key: &[u8], nonce: &u64, stream: &mut TcpStream
     let input_with_nonce_and_timestamp = nonce_str + &timestmp + &input;
     //println!("Sending input: {}", input_with_nonce_and_timestamp);
     let _ = receive_send_ready(input_with_nonce_and_timestamp, aes_key, stream).await;
-}
+} */

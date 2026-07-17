@@ -13,3 +13,8 @@ getrandom = { version = "0.4.3", features = ["sys_rng"] }
 
 tokio = { version = "1", features = ["full"] }
 csv = "1.4"
+
+
+useful_stats = { path = "../../evals/useful_stats" }
+
+env = { version = "1.0.1" }

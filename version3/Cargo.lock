@@ -162,8 +162,10 @@ dependencies = [
  "core_utils_classic",
  "csv",
  "ed25519-dalek",
+ "env",
  "getrandom 0.4.3",
  "tokio",
+ "useful_stats",
  "x25519-dalek",
 ]
 
