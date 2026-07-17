@@ -20,8 +20,23 @@ use useful_stats::*;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    // Step 1
-    let signature_keys = match get_keys_from_control(ADDR).await {
+    
+       let args: Vec<String> = std::env::args().collect();
+    if args.len() != 4 {
+        println!("\n\n\n Usage: {} <client_addr> <receiver_addr> <receiver_addr_control>", args[0]);
+        println!("Example: {} 127.0.0.1:8080 127.0.0.1:8090 127.0.0.1:8095\n\n\n", args[0]);
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "Invalid number of arguments",
+        ));
+    }
+
+        let client_addr = &args[1];
+    let receiver_addr = &args[2];
+    let _receiver_addr_control = &args[3];
+    
+        // Step 1
+    let signature_keys = match get_keys_from_control(client_addr).await {
         Ok(v) => v,
         Err(e) => panic!(" Have not got a valid signature_keys, {}", e),
     };
@@ -36,7 +51,7 @@ async fn main() -> std::io::Result<()> {
 
         // Now to do the performance test
 
-    let eloops = env::var("LOOPS").ok(); //Get result and convert option
+    let eloops = std::env::var("LOOPS").ok(); //Get result and convert option
     let nloops: u32;
 
     match eloops.is_some() {
@@ -48,7 +63,7 @@ async fn main() -> std::io::Result<()> {
 
       for i in 0..nloops+10 {
           let start_encrypt = Instant::now();
-        let mut stream = TcpStream::connect(RECEIVER_ADDR).await?;
+        let mut stream = TcpStream::connect(receiver_addr).await?;
 
    
 

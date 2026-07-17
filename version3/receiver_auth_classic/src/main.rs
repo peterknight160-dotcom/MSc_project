@@ -19,13 +19,31 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::mpsc;
 
 
-const RECEIVER_ADDR: &str = "127.0.0.1:8090";
-const RECEIVER_ADDR_CONTROL: &str = "127.0.0.1:8095";
+//const RECEIVER_ADDR: &str = "127.0.0.1:8090";
+//const RECEIVER_ADDR_CONTROL: &str = "127.0.0.1:8095";
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
+     // Get the two addreess from the command line arguments
+    let args: Vec<String> = std::env::args().collect();
+      if args.len() != 4 {
+        println!("\n\n\n Usage: {} <client_addr> <receiver_addr> <receiver_addr_control>", args[0]);
+        println!("Example: {} 127.0.0.1:8080 127.0.0.1:8090 127.0.0.1:8095\n\n\n", args[0]);
+        return Err(Error::new(
+            ErrorKind::Other,
+            "Invalid number of arguments",
+        ));
+    }
+
+    let _client_addr = &args[1];
+  
+    
+    
+    let receiver_addr = &args[2];
+    let receiver_addr_control = &args[3];
+
     // Step 2
-    let signature_keys = match get_keys_from_control(RECEIVER_ADDR_CONTROL).await {
+    let signature_keys = match get_keys_from_control(receiver_addr_control).await {
         Ok(v) => v,
         Err(_) => panic!("Failed to get keys from controller, exiting"),
     };
@@ -39,11 +57,11 @@ async fn main() -> std::io::Result<()> {
 
  
 
-    let listener_result = TcpListener::bind(RECEIVER_ADDR).await;
+    let listener_result = TcpListener::bind(receiver_addr).await;
     if listener_result.is_err() {
         eprintln!(
             "Failed to bind to {}: {}",
-            RECEIVER_ADDR,
+            receiver_addr,
             listener_result.unwrap_err()
         );
         return Err(Error::new(
@@ -52,7 +70,7 @@ async fn main() -> std::io::Result<()> {
         ));
     }
     let listener = listener_result.unwrap();
-    //println!("Echo server running on {}", RECEIVER_ADDR);
+    //println!("Echo server running on {}", receiver_addr);
 
     //let (tx, mut rx) = mpsc::channel::<()>(1);
 
