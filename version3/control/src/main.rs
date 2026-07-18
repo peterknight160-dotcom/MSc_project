@@ -35,19 +35,31 @@ enum PayloadType {
     VerifierKey,
 }
 
-const CLIENT: &str = "127.0.0.1:8080";
+//const CLIENT: &str = "127.0.0.1:8080";
 //const RECEIVER: &str = "127.0.0.1:8090";
-const RECEIVER_CONTROL: &str = "127.0.0.1:8095";
+//const RECEIVER_CONTROL: &str = "127.0.0.1:8095";
 fn main() {
-    // Don't need public key here.
+        // Get the two addreess from the command line arguments
+    let args: Vec<String> = std::env::args().collect();
+      if args.len() != 4 {
+        println!("\n\n\n Usage: {} <client_addr> <receiver_addr> <receiver_addr_control>", args[0]);
+        println!("Example: {} 127.0.0.1:8080 127.0.0.1:8090 127.0.0.1:8095\n\n\n", args[0]);
+        return;
+    }
+
+    let client_addr = &args[1];
+    let _receiver_addr = &args[2];
+    let receiver_addr_control = &args[3];
+
+
 
     //  Option Menu
     loop {
         let input = get_input("What would you like to do?");
         match input.as_str() {
             "exit" | "e" => break,
-            "client" | "c" => gen_keys(CLIENT, RECEIVER_CONTROL),
-            "receiver" | "reciever" | "r" => gen_keys(RECEIVER_CONTROL, CLIENT),
+            "client" | "c" => gen_keys(client_addr, receiver_addr_control),
+            "receiver" | "reciever" | "r" => gen_keys(receiver_addr_control, client_addr),
             //"control" => gen_keys(RECEIVER_CONTROL, CLIENT),
             _ => continue,
         }

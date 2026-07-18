@@ -36,9 +36,6 @@ async fn main() -> std::io::Result<()> {
     }
 
     let _client_addr = &args[1];
-  
-    
-    
     let receiver_addr = &args[2];
     let receiver_addr_control = &args[3];
 
