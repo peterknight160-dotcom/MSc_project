@@ -122,7 +122,7 @@ let mut chart = ChartBuilder::on(&root)
 
     chart.draw_series(
         data.iter().map(|(x, y)|
-            Rectangle::new([(*x - 2, 0), (*x + 2, *y)], BLUE.filled())
+            Rectangle::new([(*x  , 0), (*x + 2, *y)], BLUE.filled())
         )
     )?;
 

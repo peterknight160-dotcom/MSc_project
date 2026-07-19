@@ -1,0 +1,13 @@
+[package]
+name = "cvs_to_json"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+
+base65 = { path = "../base65" }
+
+
+
+csv = "1.4"

@@ -196,6 +196,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "client_enc_classic"
+version = "0.1.0"
+dependencies = [
+ "base65",
+ "core_utils_tokio",
+ "csv",
+ "env",
+ "lattice-kyber",
+ "tokio",
+ "useful_stats",
+]
+
+[[package]]
 name = "client_tokio"
 version = "0.1.0"
 dependencies = [
@@ -471,6 +484,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "cvs_to_json"
+version = "0.1.0"
+dependencies = [
+ "base65",
+ "csv",
 ]
 
 [[package]]
@@ -1304,6 +1325,22 @@ dependencies = [
  "serde_json",
  "tokio",
  "tokio-postgres",
+]
+
+[[package]]
+name = "receiver_dec_classic"
+version = "0.1.0"
+dependencies = [
+ "base65",
+ "chrono",
+ "core_utils_classic",
+ "ed25519-dalek",
+ "getrandom 0.4.3",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-postgres",
+ "x25519-dalek",
 ]
 
 [[package]]

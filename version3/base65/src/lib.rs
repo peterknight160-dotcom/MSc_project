@@ -1,4 +1,4 @@
-
+use std::time::{SystemTime };
 
 // Coding my own base64
 pub fn base64_from_bytes ( input : &[u8]) -> Option < String>
@@ -101,4 +101,15 @@ pub fn base64_to_bytes ( input : &str) -> Option < Vec<u8>>
    
     
     Some (result)
+}
+
+pub fn get_time_as_millis_base64() ->String{
+    let now = SystemTime::now();
+    let since_epoch = now.duration_since(SystemTime::UNIX_EPOCH).unwrap();
+    //since_epoch.as_millis().to_be_bytes().iter().filter(|x| **x >0).cloned().collect::<Vec<u8>>()
+    let time = (since_epoch.as_millis() ).to_be_bytes().to_vec()[8..].to_vec();
+   
+
+   base64_from_bytes(&time).unwrap()
+   
 }
