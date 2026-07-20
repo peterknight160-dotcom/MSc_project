@@ -1340,6 +1340,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tokio-postgres",
+ "useful_stats",
  "x25519-dalek",
 ]
 
@@ -1757,6 +1758,7 @@ checksum = "7df058c713841ad818f1dc5d3fd88063241cc61f49f5fbea4b951e8cf5a8d71d"
 name = "useful_stats"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "plotters",
 ]
 

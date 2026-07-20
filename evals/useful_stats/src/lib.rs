@@ -90,8 +90,9 @@ pub fn stats_from_btree ( input:&BTreeMap<u128, u32>, legend: &str ) -> StatsRes
 use plotters::prelude::*;
 
 pub fn draw_histogram_from_btree(input:& BTreeMap<u128, u32>, legend: &str, twosigma: f64) -> Result<(), Box<dyn std::error::Error>> {
-
-    let chart_name = format!("hist_{}.png", legend);
+    // Get data & time to create unique filename
+    let datetime= chrono::Local::now().format("%Y-%m-%d_%H-%M-%S").to_string();
+    let chart_name = format!("hist_{}_{}.png", legend, datetime);
     let root = BitMapBackend::new(&chart_name, (640, 480)).into_drawing_area();
     root.fill(&WHITE)?;
 
@@ -122,7 +123,7 @@ let mut chart = ChartBuilder::on(&root)
 
     chart.draw_series(
         data.iter().map(|(x, y)|
-            Rectangle::new([(*x  , 0), (*x + 2, *y)], BLUE.filled())
+            Rectangle::new([(*x -2 , 0), (*x + 2, *y)], BLUE.filled())
         )
     )?;
 

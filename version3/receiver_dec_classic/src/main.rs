@@ -15,6 +15,10 @@ use getrandom::{SysRng, rand_core::UnwrapErr};
 
 use std::io::{Error, ErrorKind};
 use std::time::SystemTime;
+use useful_stats::*;
+use std::collections::BTreeMap;
+use std::time::Instant;
+
 //use std::result;
 //use serde::{Deserialize, Serialize};
 use ::std::sync::Arc;
@@ -126,20 +130,25 @@ async fn handle_connection(
         base65::base64_from_bytes(&shared_secret).unwrap()
     );
 
+
+       let mut dec_time_hash: BTreeMap<u128, u32> = BTreeMap::new();
     loop {
+
+
         let len = socket.read_u32().await?;
         let mut buffer = vec![0; len as usize];
         let _bytes_read = socket.read_exact(&mut buffer).await?;
 
         //let received = received_string!(buffer, bytes_read);
 
-        
+        let start_decrypt = Instant::now();
         let ss = shared_secret.clone();
 
         let s = receive_message(&ss, &buffer);
 
-        // Send "ACK" back to the client to acknowledge receipt of the message
-        socket.write_all(b"ACK").await?;
+        let elapsed_decrypt = start_decrypt.elapsed().as_micros();
+        *dec_time_hash.entry(elapsed_decrypt).or_insert(0) += 1;
+        
 
         match s {
             Ok(msg) => {
@@ -147,6 +156,13 @@ async fn handle_connection(
                 // if msg ends with "END", then break the loop
                 if msg.ends_with("END") {
                     println!("Received END message, closing connection");
+
+                    let stats_dec = stats_from_btree(&dec_time_hash, "PQC Decryption");
+                    // Get mean + 2 std devs
+                    let twosigma = stats_dec.mean + 2.0 * stats_dec.std_dev;
+
+                    let _ = draw_histogram_from_btree(&dec_time_hash, "PQC_Decryption", twosigma);
+                    println!("Stats {} ", stats_dec);
                     let _ = tx.send(()).await;
                     break;
                 }

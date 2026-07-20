@@ -1,13 +1,13 @@
 use base65::*;
 use core_utils_tokio::*;
-const ADDR: &str = "127.0.0.1:8080";
-const RECEIVER_ADDR: &str = "127.0.0.1:8090";
+/* const ADDR: &str = "127.0.0.1:8080";
+const RECEIVER_ADDR: &str = "127.0.0.1:8090"; */
 const JSON_FILE: &str = "JSON.txt";
 //use client_tokio::{CsvReader, json_doc_from_reader};
-use kyber::ML_KEM_512;
+
 
 use tokio::net::TcpStream;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
 
 use std::fs::File;
 use std::io::{self, BufRead};
@@ -94,6 +94,22 @@ async fn main() -> std::io::Result<()> {
         false => nloops = 10,
     }
 
+    let ebytes = env::var("BYTES").ok(); //Get result and convert option
+    let nbytes: u32;
+
+    match ebytes.is_some() {
+        true => nbytes = ebytes.unwrap().parse::<u32>().unwrap(),
+        false => nbytes = 1024,
+    }
+
+    // Use nbytes to determine how many bytes to send in each message
+    println!("Sending {} messages of {} bytes each", nloops, nbytes);
+    let one_json = jsons[0].len();
+    println!("One JSON document is {} bytes", one_json);
+    let njsons = (nbytes + one_json as u32 - 1) / one_json as u32;
+
+    println!("Sending {} JSON documents in each message", njsons);
+
     let mut enc_time_hash: BTreeMap<u128, u32> = BTreeMap::new();
     
     
@@ -101,25 +117,23 @@ async fn main() -> std::io::Result<()> {
     let mut i: usize = 0;
     for _ in 0..nloops {    
 
-         let start_encrypt = Instant::now();
+       
 
-         for _ in 0..100{ 
-        /* let input =
-            get_input("What would you like to send a JSON to the receiver? (Type END to finish)")
-                .to_uppercase(); */
+       
         nonce += 1;
         
-        // 
-        let json_doc_to_send = &jsons[i];
-        i = (i + 1) % jsons.len();
-        send(json_doc_to_send, shared_secret, &nonce, &mut stream).await;
-         }
-      /*   match input.as_str() {
-            "END" => break,
-            "YES" | "Y" => send(json_doc_to_send, shared_secret, &nonce, &mut stream).await,
-            _ => (),
-        }; */
-        let elapsed_encrypt = start_encrypt.elapsed().as_millis();
+        
+        let mut json_doc_to_send = String::from(&jsons[i]);
+        for _ in 1..njsons {
+          i = (i+1) % jsons.len();
+         json_doc_to_send.push_str(&jsons[i]);
+      
+        }   
+         let start_encrypt = Instant::now();
+        send(&json_doc_to_send, shared_secret, &nonce, &mut stream).await;
+        // }
+      
+        let elapsed_encrypt = start_encrypt.elapsed().as_micros();
         *enc_time_hash.entry(elapsed_encrypt).or_insert(0) += 1;
     }
     send("END", shared_secret, &nonce, &mut stream).await;
@@ -135,7 +149,7 @@ async fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-fn get_input(prompt: &str) -> String {
+/* fn get_input(prompt: &str) -> String {
     let mut input = String::new();
     println!("{}", prompt);
 
@@ -144,7 +158,7 @@ fn get_input(prompt: &str) -> String {
         .expect("Failed to read line");
     // Remove any trailing whitespace
     input.trim_end().to_string()
-}
+} */
 
 async fn send(input: &str , aes_key: &[u8], nonce: &u64, stream: &mut TcpStream) {
     // Add nonce and timestamp to the input
@@ -156,9 +170,9 @@ async fn send(input: &str , aes_key: &[u8], nonce: &u64, stream: &mut TcpStream)
     //println!("Sending input: {}", input_with_nonce_and_timestamp);
     let _ = receive_send_ready(input_with_nonce_and_timestamp, aes_key, stream).await;
 
-    // Get "ACK" from the receiver
+   /*  // Get "ACK" from the receiver
     let mut buf = [0; 3];
     let _ = stream.read_exact(&mut buf).await;
-    let _ack = std::str::from_utf8(&buf).unwrap();
+    let _ack = std::str::from_utf8(&buf).unwrap(); */
     
 }
