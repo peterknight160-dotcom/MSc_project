@@ -85,6 +85,9 @@ async fn main() -> std::io::Result<()> {
 
         let auth_time = start_encrypt.elapsed().as_micros();
          
+         // Close the connection to the receiver
+         stream.shutdown().await?;
+
         //println!("Auth time: {} microseconds", auth_time);
         if i >= 10 {
             *auth_time_hash.entry(auth_time).or_insert(0) += 1;
