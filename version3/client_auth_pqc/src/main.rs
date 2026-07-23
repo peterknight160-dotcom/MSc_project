@@ -90,6 +90,11 @@ async fn main() -> std::io::Result<()> {
             *auth_time_hash.entry(auth_time).or_insert(0) += 1;
         }
         
+        if i % 1000 == 0 {
+            println!("Completed {} iterations", i);
+            // Sleep for 100ms to avoid overwhelming the receiver
+            tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+        }
 
         // Disconnect from the receiver
         let _ = stream.shutdown().await;
@@ -97,9 +102,9 @@ async fn main() -> std::io::Result<()> {
 
         let stats_auth = stats_from_btree(&auth_time_hash, "PQC Authentication");
     // Get mean + 2 std devs
-    let twosigma = stats_auth.mean + 2.0 * stats_auth.std_dev;
+    let twosigma = stats_auth.mean + 3.0 * stats_auth.std_dev;
 
-    let _ = draw_histogram_from_btree(&auth_time_hash, "PQC_Authentication", twosigma);
+    let _ = draw_histogram_from_btree(&auth_time_hash, "PQC_Authentication 1 Computer", twosigma);
     println!(        "Stats {} ",stats_auth           );
 
     Ok(())
