@@ -413,3 +413,55 @@ pub async fn log_authentication_to_database(
 
     Ok(())
 }
+
+
+use chacha20::{ChaCha20   };
+use chacha20::cipher::{KeyIvInit, StreamCipher};
+
+
+pub fn receive_message2(aes_key: &[u8], received: &[u8]) -> Result<String, io::Error> {
+    let deserialized: OBDmessage = postcard::from_bytes(received).unwrap();
+    let nonce: [u8; 12] = [0x24; 12];
+
+
+
+    let mut cipher = ChaCha20::new_from_slices(aes_key, &nonce).expect("Failed to create cipher");
+        // Decrypt the ciphertext and handle any resulting errors using match
+    let mut decrypted = deserialized.ciphertext.clone();
+    cipher.apply_keystream(&mut decrypted);
+    match String::from_utf8(decrypted) {
+        Ok(s) => Ok(s),
+        Err(e) => Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("Failed to convert decrypted bytes to string: {}", e),
+        )),
+    }
+}
+
+
+//Client Step 7  - Chacha20 encryption
+pub async fn receive_send_ready2(
+    text: String,
+    aes_key: &[u8],
+    stream: &mut TcpStream,
+) -> Result<u16, io::Error> {
+    let nonce: [u8; 12] = [0x24; 12];
+    let mut cipher = ChaCha20::new_from_slices(aes_key, &nonce).expect("Failed to create cipher");
+
+    let encrypted = OBDmessage {
+        ciphertext: {
+            let mut buf = text.as_bytes().to_vec();
+            cipher.apply_keystream(&mut buf);
+            buf
+        },
+    };
+
+    let serialized = postcard::to_allocvec(&encrypted).unwrap();
+    stream.write_u32(serialized.len() as u32).await?;
+    stream.write_all(&serialized).await?;
+
+    /*
+    let encrypted = aes_enc_ecb(&verifier_payload_json.as_bytes(), &my_aes256, padding)
+       .expect("Encryption failed"); */
+    Ok(1)
+}

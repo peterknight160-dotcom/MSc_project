@@ -136,6 +136,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d524456ba66e72eb8b115ff89e01e497f8e6d11d78b70b1aa13c0fbd97540a81"
 dependencies = [
  "cfg-if",
+ "cipher",
  "cpufeatures 0.3.0",
  "rand_core",
 ]
@@ -152,6 +153,17 @@ dependencies = [
  "serde",
  "wasm-bindgen",
  "windows-link",
+]
+
+[[package]]
+name = "cipher"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e8cf2a2c93cd704877c0858356ed03480ff301ee950b43f1cbe4573b088bfa6c"
+dependencies = [
+ "block-buffer 0.12.1",
+ "crypto-common 0.2.2",
+ "inout",
 ]
 
 [[package]]
@@ -177,7 +189,7 @@ dependencies = [
  "core_utils_pqc",
  "csv",
  "env",
- "lattice-kyber",
+ "lattice-kyber 0.1.2",
  "tokio",
  "useful_stats",
 ]
@@ -190,7 +202,7 @@ dependencies = [
  "core_utils_pqc",
  "csv",
  "env",
- "lattice-kyber",
+ "lattice-kyber 0.1.2",
  "tokio",
  "useful_stats",
 ]
@@ -203,7 +215,20 @@ dependencies = [
  "core_utils_tokio",
  "csv",
  "env",
- "lattice-kyber",
+ "lattice-kyber 0.1.2",
+ "tokio",
+ "useful_stats",
+]
+
+[[package]]
+name = "client_enc_pqc"
+version = "0.1.0"
+dependencies = [
+ "base65",
+ "core_utils_classic",
+ "csv",
+ "env",
+ "lattice-kyber 0.2.1",
  "tokio",
  "useful_stats",
 ]
@@ -215,7 +240,7 @@ dependencies = [
  "base65",
  "core_utils_tokio",
  "csv",
- "lattice-kyber",
+ "lattice-kyber 0.1.2",
  "tokio",
 ]
 
@@ -327,6 +352,7 @@ name = "core_utils_classic"
 version = "0.1.0"
 dependencies = [
  "base65",
+ "chacha20",
  "chrono",
  "ed25519-dalek",
  "getrandom 0.4.3",
@@ -347,7 +373,7 @@ dependencies = [
  "base65",
  "chrono",
  "dilithium-rs",
- "lattice-kyber",
+ "lattice-kyber 0.1.2",
  "postcard",
  "rand",
  "serde",
@@ -364,7 +390,7 @@ dependencies = [
  "base65",
  "chrono",
  "dilithium-rs",
- "lattice-kyber",
+ "lattice-kyber 0.1.2",
  "postcard",
  "rand",
  "serde",
@@ -525,7 +551,7 @@ dependencies = [
  "getrandom 0.2.17",
  "serde",
  "sha2 0.10.9",
- "sha3",
+ "sha3 0.10.9",
  "subtle",
  "zeroize",
 ]
@@ -899,6 +925,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "inout"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4250ce6452e92010fdf7268ccc5d14faa80bb12fc741938534c58f16804e03c7"
+dependencies = [
+ "hybrid-array",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -931,6 +966,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "keccak"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e24a010dd405bd7ed803e5253182815b41bf2e6a80cc3bfc066658e03a198aa"
+dependencies = [
+ "cfg-if",
+ "cpufeatures 0.3.0",
+]
+
+[[package]]
 name = "lattice-kyber"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -938,8 +983,21 @@ checksum = "602d7ee77b8854f55e3c8acba88f84ef97fd3cf838ff229a0193c82f1bd4233b"
 dependencies = [
  "getrandom 0.2.17",
  "serde",
- "sha3",
+ "sha3 0.10.9",
  "subtle",
+ "zeroize",
+]
+
+[[package]]
+name = "lattice-kyber"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf27cdfb137f5635bb1b4ded4028d63a657ec5160ba09d40ad1f26ae6d87b36a"
+dependencies = [
+ "getrandom 0.4.3",
+ "serde",
+ "sha3 0.12.0",
+ "shake",
  "zeroize",
 ]
 
@@ -1320,7 +1378,7 @@ dependencies = [
  "base65",
  "chrono",
  "core_utils_tokio",
- "lattice-kyber",
+ "lattice-kyber 0.1.2",
  "serde",
  "serde_json",
  "tokio",
@@ -1345,13 +1403,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "receiver_dec_pqc"
+version = "0.1.0"
+dependencies = [
+ "base65",
+ "chacha20",
+ "chrono",
+ "core_utils_classic",
+ "ed25519-dalek",
+ "getrandom 0.4.3",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-postgres",
+ "useful_stats",
+ "x25519-dalek",
+]
+
+[[package]]
 name = "receiver_tokio"
 version = "0.1.0"
 dependencies = [
  "base65",
  "chrono",
  "core_utils_tokio",
- "lattice-kyber",
+ "lattice-kyber 0.1.2",
  "serde",
  "serde_json",
  "tokio",
@@ -1502,7 +1578,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77fd7028345d415a4034cf8777cd4f8ab1851274233b45f84e3d955502d93874"
 dependencies = [
  "digest 0.10.7",
- "keccak",
+ "keccak 0.1.6",
+]
+
+[[package]]
+name = "sha3"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc9bad02c26382724b2d2692c6f179285e4b54eeecd7968f52a50059c3c11759"
+dependencies = [
+ "digest 0.11.3",
+ "keccak 0.2.0",
+ "sponge-cursor",
+]
+
+[[package]]
+name = "shake"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09057cb2149ad4cbd2da1e26b351f9a4c354219421229c69c3063e6f61947c4a"
+dependencies = [
+ "digest 0.11.3",
+ "keccak 0.2.0",
+ "sponge-cursor",
 ]
 
 [[package]]
@@ -1578,6 +1676,12 @@ checksum = "3763264f6b73151db08c50ff20d7d8a0b8796e021cdea7ceedad07b80155fa0e"
 dependencies = [
  "lock_api",
 ]
+
+[[package]]
+name = "sponge-cursor"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a0219bd7d979d58245a4f41f695e1ac9f8befdffadd7f61f1bae9e39abc6620"
 
 [[package]]
 name = "stable_deref_trait"
