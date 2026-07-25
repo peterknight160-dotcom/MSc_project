@@ -1,0 +1,17 @@
+[package]
+name = "client_enc_ntru"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+core_utils_classic = { path = "../core_utils_classic" }
+useful_stats = { path = "../../evals/useful_stats" }
+base65 = { path = "../base65" }
+lattice-kyber = { version = "0.2.1", features = ["getrandom","serde"] }
+
+tokio = { version = "1", features = ["full"] }
+csv = "1.4"
+env = "1.0.1"
+ntrulp = { version = "0.2.5", features = ["ntrup653"] } 
+rand = { version = "0.10.2", features = ["std"] }
