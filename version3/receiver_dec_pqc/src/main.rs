@@ -163,11 +163,11 @@ async fn handle_connection(
                 if msg.ends_with("END") {
                     println!("Received END message, closing connection");
 
-                    let stats_dec = stats_from_btree(&dec_time_hash, "PQC Decryption");
+                    let stats_dec = stats_from_btree(&dec_time_hash, "ChaCha20 Decryption");
                     // Get mean + 2 std devs
                     let twosigma = stats_dec.mean + 2.0 * stats_dec.std_dev;
 
-                    let _ = draw_histogram_from_btree(&dec_time_hash, "PQC_Decryption", twosigma);
+                    let _ = draw_histogram_from_btree(&dec_time_hash, "ChaCha20_Decryption", twosigma);
                     println!("Stats {} ", stats_dec);
                     let _ = tx.send(()).await;
                     break;

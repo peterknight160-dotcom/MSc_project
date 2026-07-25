@@ -138,11 +138,11 @@ async fn main() -> std::io::Result<()> {
     }
     send("END", shared_secret, &nonce, &mut stream).await;
 
-     let stats_enc = stats_from_btree(&enc_time_hash, "PQC Encryption");
+     let stats_enc = stats_from_btree(&enc_time_hash, "AES256 Encryption");
     // Get mean + 2 std devs
     let twosigma = stats_enc.mean + 2.0 * stats_enc.std_dev;
 
-    let _ = draw_histogram_from_btree(&enc_time_hash, "PQC_Encryption", twosigma);
+    let _ = draw_histogram_from_btree(&enc_time_hash, "AES256_Encryption", twosigma);
     println!(        "Stats {} ",stats_enc           );
 
     
