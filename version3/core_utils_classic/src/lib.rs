@@ -21,6 +21,19 @@ use serde::{Deserialize, Serialize};
 //use serde_json::Result;
 
 use soft_aes::aes::{aes_dec_ecb, aes_enc_ecb};
+
+use ntrulp::key::priv_key::*;
+use ntrulp::key::pub_key::*;
+use ntrulp::key::kem_error::KemErrors;
+use ntrulp::params::params::*;
+use ntrulp::ntru::cipher::static_bytes_encrypt;
+use ntrulp::ntru::std_cipher; 
+
+use ntrulp::poly::r3::R3;
+use ntrulp::poly::rq::Rq;
+use ntrulp::rng::{self, random_small, short_random};
+
+
 #[derive(Serialize, Deserialize, Debug)]
 struct AuthenticationPackage {
     privatekey: Option<SigningKey>,
@@ -439,6 +452,9 @@ pub fn receive_message2(aes_key: &[u8], received: &[u8]) -> Result<String, io::E
 }
 
 
+
+
+
 //Client Step 7  - Chacha20 encryption
 pub async fn receive_send_ready2(
     text: String,
@@ -464,4 +480,44 @@ pub async fn receive_send_ready2(
     let encrypted = aes_enc_ecb(&verifier_payload_json.as_bytes(), &my_aes256, padding)
        .expect("Encryption failed"); */
     Ok(1)
+}
+
+//Client Step 7  - NTRU encryption
+pub async fn receive_send_ready3(
+    text: String,
+    pk: ntrulp::key::pub_key::PubKey,
+    stream: &mut TcpStream,
+) -> Result<u16, io::Error> {
+    //let nonce: [u8; 12] = [0x24; 12];
+    let mut rng = rand::rng() ;
+    let encrypted = std_cipher::bytes_encrypt(&mut rng, text.as_bytes(), pk.clone()).unwrap(); 
+    let encrypted = OBDmessage {
+        ciphertext: encrypted,
+    };
+
+    let serialized = postcard::to_allocvec(&encrypted).unwrap();
+    stream.write_u32(serialized.len() as u32).await?;
+    stream.write_all(&serialized).await?;
+
+    /*
+    let encrypted = aes_enc_ecb(&verifier_payload_json.as_bytes(), &my_aes256, padding)
+       .expect("Encryption failed"); */
+    Ok(1)
+}
+
+
+pub fn receive_message3(sk: ntrulp::key::priv_key::PrivKey, received: &[u8]) -> Result<String, io::Error> {
+    let deserialized: OBDmessage = postcard::from_bytes(received).unwrap();
+    //let nonce: [u8; 12] = [0x24; 12];
+
+
+
+    let decrypted = std_cipher::bytes_decrypt(&deserialized.ciphertext, sk.clone() ).unwrap();
+    match String::from_utf8(decrypted) {
+        Ok(s) => Ok(s),
+        Err(e) => Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("Failed to convert decrypted bytes to string: {}", e),
+        )),
+    }
 }

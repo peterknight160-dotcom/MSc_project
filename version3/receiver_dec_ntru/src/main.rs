@@ -162,9 +162,9 @@ async fn handle_connection(
         //let received = received_string!(buffer, bytes_read);
 
         let start_decrypt = Instant::now();
-        let ss = shared_secret.clone();
+       // let ss = shared_secret.clone();
 
-        let s = receive_message2(&ss, &buffer);
+        let s = receive_message3(sk.clone(), &buffer);
 
         let elapsed_decrypt = start_decrypt.elapsed().as_micros();
         *dec_time_hash.entry(elapsed_decrypt).or_insert(0) += 1;

@@ -138,8 +138,9 @@ async fn main() -> std::io::Result<()> {
     
     let mut nonce: u64 = 0;
     let mut i: usize = 0;
-    let shared_secret = pk.to_bytes();
-    let shared_secret = &shared_secret;
+   
+
+
     for _ in 0..nloops {    
 
        
@@ -155,13 +156,13 @@ async fn main() -> std::io::Result<()> {
       
         }   
          let start_encrypt = Instant::now();
-        send(&json_doc_to_send, shared_secret, &nonce, &mut stream).await;
+        send(&json_doc_to_send, pk.clone(), &nonce, &mut stream).await;
         // }
       
         let elapsed_encrypt = start_encrypt.elapsed().as_micros();
         *enc_time_hash.entry(elapsed_encrypt).or_insert(0) += 1;
     }
-    send("END", shared_secret, &nonce, &mut stream).await;
+    send("END", pk.clone(), &nonce, &mut stream).await;
 
      let stats_enc = stats_from_btree(&enc_time_hash, "ChaCha20 Encryption");
     // Get mean + 2 std devs
@@ -186,7 +187,7 @@ async fn main() -> std::io::Result<()> {
 } */
 
 
-async fn send(input: &str, aes_key: &[u8], nonce: &u64, stream: &mut TcpStream) {
+async fn send(input: &str, pk: PubKey, nonce: &u64, stream: &mut TcpStream) {
     // Add nonce and timestamp to the input
     // Format nonce as 20-digit zero-padded string
 
@@ -194,5 +195,5 @@ async fn send(input: &str, aes_key: &[u8], nonce: &u64, stream: &mut TcpStream) 
     let timestmp = get_time_as_millis_base64();
     let input_with_nonce_and_timestamp = nonce_str + &timestmp + &input;
     //println!("Sending input: {}", input_with_nonce_and_timestamp);
-    let _ = receive_send_ready2(input_with_nonce_and_timestamp, aes_key, stream).await;
+    let _ = receive_send_ready3(input_with_nonce_and_timestamp, pk, stream).await;
 }
