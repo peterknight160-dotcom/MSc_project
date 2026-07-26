@@ -208,6 +208,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "client_auth_text"
+version = "0.1.0"
+dependencies = [
+ "base65",
+ "core_utils_text",
+ "csv",
+ "env",
+ "tokio",
+ "useful_stats",
+]
+
+[[package]]
 name = "client_enc_classic"
 version = "0.1.0"
 dependencies = [
@@ -395,6 +407,20 @@ dependencies = [
  "serde",
  "serde_json",
  "soft-aes",
+ "tokio",
+ "tokio-postgres",
+]
+
+[[package]]
+name = "core_utils_text"
+version = "0.1.0"
+dependencies = [
+ "base65",
+ "chrono",
+ "postcard",
+ "rand",
+ "serde",
+ "serde_json",
  "tokio",
  "tokio-postgres",
 ]
@@ -1441,6 +1467,19 @@ dependencies = [
  "chrono",
  "core_utils_tokio",
  "lattice-kyber 0.1.2",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-postgres",
+]
+
+[[package]]
+name = "receiver_auth_text"
+version = "0.1.0"
+dependencies = [
+ "base65",
+ "chrono",
+ "core_utils_text",
  "serde",
  "serde_json",
  "tokio",

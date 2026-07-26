@@ -2,7 +2,7 @@ use base65::*;
 use core_utils_classic::*;
 const ADDR: &str = "127.0.0.1:8080";
 const RECEIVER_ADDR: &str = "127.0.0.1:8090";
-const JSON_FILE: &str = "JSON.csv";
+const JSON_FILE: &str = "JSON.txt";
 use client_enc_ntru::{CsvReader, json_doc_from_reader};
 
 use std::io::{self, BufRead};
