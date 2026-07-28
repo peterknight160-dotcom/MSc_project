@@ -4,6 +4,7 @@ members =  ["base65", "client_tokio","control", "core_utils_tokio",
  "core_utils_classic", "receiver_tokio", "core_utils_pqc", "client_auth_pqc", "receiver_auth_pqc",
   "client_auth_pqc_keys", "control_classic", "client_auth_classic", "receiver_auth_classic", "csv_to_json", 
   "client_enc_classic", "receiver_dec_classic" , "receiver_dec_pqc", "client_enc_pqc",  "receiver_dec_ntru", "client_enc_ntru",
-  "receiver_auth_text", "client_auth_text", "core_utils_text"]
+  "receiver_auth_text", "client_auth_text", "core_utils_text", "core_timer", "receiver_timer", "client_timer",
+   ]
 
 

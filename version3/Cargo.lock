@@ -261,6 +261,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "client_timer"
+version = "0.1.0"
+dependencies = [
+ "base65",
+ "core_timer",
+ "csv",
+ "env",
+ "postcard",
+ "serde",
+ "tokio",
+ "useful_stats",
+]
+
+[[package]]
 name = "client_tokio"
 version = "0.1.0"
 dependencies = [
@@ -372,6 +386,18 @@ dependencies = [
  "core-graphics",
  "foreign-types",
  "libc",
+]
+
+[[package]]
+name = "core_timer"
+version = "0.1.0"
+dependencies = [
+ "base65",
+ "chrono",
+ "postcard",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
@@ -1539,6 +1565,17 @@ dependencies = [
  "tokio-postgres",
  "useful_stats",
  "x25519-dalek",
+]
+
+[[package]]
+name = "receiver_timer"
+version = "0.1.0"
+dependencies = [
+ "base65",
+ "chrono",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]

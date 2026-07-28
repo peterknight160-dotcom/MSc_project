@@ -1,0 +1,19 @@
+[package]
+name = "client_timer"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+core_timer = { path = "../core_timer" }
+base65 = { path = "../base65" }
+
+tokio = { version = "1", features = ["full"] }
+csv = "1.4"
+
+
+useful_stats = { path = "../../evals/useful_stats" }
+
+env = { version = "1.0.1" }
+postcard = { version = "1", features = ["alloc"] }
+serde = { version = "1.0", features = ["derive"] }
