@@ -15,3 +15,7 @@ csv = "1.4"
 useful_stats = { path = "../../evals/useful_stats" }
 
 env = { version = "1.0.1" }
+
+
+[features]
+trace = ["core_utils_pqc/trace"]

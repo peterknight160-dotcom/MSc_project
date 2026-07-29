@@ -1491,7 +1491,7 @@ version = "0.1.0"
 dependencies = [
  "base65",
  "chrono",
- "core_utils_tokio",
+ "core_utils_pqc",
  "lattice-kyber 0.1.2",
  "serde",
  "serde_json",

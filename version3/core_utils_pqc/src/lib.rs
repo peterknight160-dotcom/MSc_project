@@ -19,6 +19,19 @@ use serde::{Deserialize, Serialize};
 //use serde_json::Result;
 
 use soft_aes::aes::{aes_dec_ecb, aes_enc_ecb};
+
+
+#[cfg(feature = "trace")]
+macro_rules! trace {
+    ($($arg:tt)*) => {
+        println!($($arg)*);
+    };
+}
+
+#[cfg(not(feature = "trace"))]
+macro_rules! trace {
+    ($($arg:tt)*) => {};
+}
 #[derive(Serialize, Deserialize, Debug)]
 struct AuthenticationPackage {
     privatekey: Option<Vec<u8>>,
@@ -210,6 +223,7 @@ pub async fn send_signed_rq(
 
     stream.write_u32(sender_bytes.len() as u32).await?;
     stream.write_all(&sender_bytes).await?;
+    trace!("[core 226] Length of signed message sent to receiver: {}", sender_bytes.len());
     Ok(String::from("Ok"))
 }
 
@@ -262,6 +276,8 @@ pub fn ml_key_to_send(
     };
     let signed_message = postcard::to_allocvec(&signed_message).unwrap();
 
+    trace!("[core 279] Length of signed message [KEM1] sent to receiver: {}", signed_message.len());
+
     Ok(signed_message)
 }
 
@@ -301,6 +317,8 @@ pub async fn send_ciphertext(
     let len = message_bytes.len() as u32;
     stream.write_u32(len).await?;
     stream.write_all(&message_bytes).await?;
+
+    trace!("[core 321] Length of ciphertext sent to receiver: {}", message_bytes.len());
 
     Ok(String::from("Ok"))
 }

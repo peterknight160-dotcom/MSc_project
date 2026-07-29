@@ -14,6 +14,20 @@ use std::collections::BTreeMap;
 use std::time::Instant;
 use useful_stats::*;
 
+
+#[cfg(feature = "trace")]
+macro_rules! trace {
+    ($($arg:tt)*) => {
+        println!($($arg)*);
+    };
+}
+
+#[cfg(not(feature = "trace"))]
+macro_rules! trace {
+    ($($arg:tt)*) => {};
+}
+
+
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
 
@@ -55,7 +69,7 @@ async fn main() -> std::io::Result<()> {
 
     let mut auth_time_hash: BTreeMap<u128, u32> = BTreeMap::new();
 
-    for i in 0..nloops+10 {
+    for i in 0..nloops  {
           let start_encrypt = Instant::now();
         let mut stream = TcpStream::connect(receiver_addr).await?;
 
@@ -81,7 +95,7 @@ async fn main() -> std::io::Result<()> {
         let _shared_secret = ss_sender.as_bytes();
 
         let _ = send_ciphertext(ct, &mut stream).await;
- 
+    
 
         let auth_time = start_encrypt.elapsed().as_micros();
          

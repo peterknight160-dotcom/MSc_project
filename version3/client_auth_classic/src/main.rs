@@ -17,6 +17,17 @@ use std::collections::BTreeMap;
 use std::time::Instant;
 use useful_stats::*;
 
+#[cfg(feature = "trace")]
+macro_rules! trace {
+    ($($arg:tt)*) => {
+        println!($($arg)*);
+    };
+}
+
+#[cfg(not(feature = "trace"))]
+macro_rules! trace {
+    ($($arg:tt)*) => {};
+}
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -93,6 +104,7 @@ async fn main() -> std::io::Result<()> {
     let s = ec25519_key_to_send(&signature_keys, &sender_public)?;
     stream.write_u32(s.len() as u32).await?;
     stream.write_all(&s).await?;
+    trace!("[Client 96] Length of key set to send to receiver: {:?}", s.len());
 
 
     let shared_secret = sender_secret.diffie_hellman(&pub_key) ;

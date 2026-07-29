@@ -34,6 +34,18 @@ use ntrulp::poly::rq::Rq;
 use ntrulp::rng::{self, random_small, short_random};
 
 
+#[cfg(feature = "trace")]
+macro_rules! trace {
+    ($($arg:tt)*) => {
+        println!($($arg)*);
+    };
+}
+
+#[cfg(not(feature = "trace"))]
+macro_rules! trace {
+    ($($arg:tt)*) => {};
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 struct AuthenticationPackage {
     privatekey: Option<SigningKey>,
@@ -164,6 +176,7 @@ pub async fn get_keys_from_control(addr: &str) -> Result<SignatureKeys, std::io:
 
         let deserialized: AuthenticationPackage = postcard::from_bytes(&buf).unwrap();
         println!("Received signed AuthenticationPackage from control ...");
+        println!("Package is bytes: {:?}", buf);
 
         println!("Received keys from control ...");
         // Decrypt the ciphertext
@@ -215,6 +228,7 @@ pub async fn send_signed_rq(
         signature,
     };
     let sender_bytes = postcard::to_allocvec(&signed_message).unwrap();
+    trace!("[Core 231] Length of signed message to receiver: {}", sender_bytes.len());
 
     stream.write_u32(sender_bytes.len() as u32).await?;
     stream.write_all(&sender_bytes).await?;
@@ -230,6 +244,7 @@ pub async fn receive_signed_rq(
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
     let signature = signed_message.signature;
+    trace!("[Core 247] Received signed message length {} from client: ", received.len());
 
     // Check keypair signature and return the text if valid, else return an error
   
@@ -287,6 +302,7 @@ pub fn ec25519_key_to_send(
         signature,
     };
     let signed_message = postcard::to_allocvec(&signed_message).unwrap();
+    trace!("[Core 305] KEM 1 message length {} to send by receiver:", signed_message.len());
 
     Ok(signed_message)
 }
@@ -302,6 +318,7 @@ pub async fn get_ec25519_keys(
     stream.read_exact(&mut buf).await?;
 
     let signed_message: SignedPubKey = postcard::from_bytes(&buf).unwrap();
+    trace!("[Core 321] KEM 2 message length {} received by client:", buf.len());
     let signature = signed_message.signature;
 
     
