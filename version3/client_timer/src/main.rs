@@ -50,6 +50,15 @@ async fn main() -> std::io::Result<()> {
         false => nloops = 10,
     }
 
+    
+    let ewait = std::env::var("WAIT").ok(); //Get result and convert option
+    let nwait: u64;
+
+    match ewait.is_some() {
+        true => nwait = ewait.unwrap().parse::<u64>().unwrap(),
+        false => nwait = 3,
+    }
+
     let mut ping_time_hash: BTreeMap<u128, u32> = BTreeMap::new();
 
       for i  in 0..nloops+10 {
@@ -80,7 +89,10 @@ async fn main() -> std::io::Result<()> {
         let _ = stream.shutdown().await;
 
         // Wait for 3 milliseconds before the next iteration
-        tokio::time::sleep(tokio::time::Duration::from_millis(3)).await;
+        if nwait > 0 {
+            tokio::time::sleep(tokio::time::Duration::from_millis(nwait)).await;
+        }
+        
     }
 
         let stats_ping = stats_from_btree(&ping_time_hash, "Stats Ping");
