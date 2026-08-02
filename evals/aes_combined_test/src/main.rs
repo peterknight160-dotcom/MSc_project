@@ -21,8 +21,9 @@ fn test_ntru( message: &[u8], nkeys: u32, nloops: u32) -> Option<bool> {
         
     
     // Get hostname
-    let hostname = hostname::get().unwrap();
-    println!("Hostname: {:?}", hostname);
+    let hostname = hostname::get().unwrap().into_string().unwrap();
+  
+    println!("Hostname: {}", hostname);
    
     // Outer loop - number of keys to use
     for i in 0..nkeys {
@@ -54,8 +55,8 @@ fn test_ntru( message: &[u8], nkeys: u32, nloops: u32) -> Option<bool> {
 
     let _ = draw_histogram_from_btree(&enc_time_hash, "AES256_Encryption", twosigma_enc);
     let _ = draw_histogram_from_btree(&dec_time_hash, "AES256_Decryption", twosigma_dec);
-    println!("Stats Encryption {} ", stats_enc);
-    println!("Stats Decryption {} ", stats_dec);
+    println!("Stats Encryption for {} :{} ",hostname, stats_enc);
+    println!("Stats Decryption for {} :{} ",hostname, stats_dec);
 
 
 
