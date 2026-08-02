@@ -46,14 +46,16 @@ fn test_ntru( message: &[u8], nkeys: u32, nloops: u32) -> Option<bool> {
 
    
     // Outer loop - number of keys to use
-    for _ in 0..nkeys {
+    for i in 0..nkeys {
+
+    println!("Key pair number: {}", i);
 
     let (sk, pk) = generate_keypair().unwrap();
        
         for _ in 0..nloops {
             let mut rng = rand::rng();
             let start_encrypt = Instant::now();
-           let ciphertext = bytes_encrypt(&mut rng, message, pk.clone()).unwrap();
+            let ciphertext = bytes_encrypt(&mut rng, &message, pk.clone()).unwrap();
             let encrypt_time = start_encrypt.elapsed().as_micros();
             
             *enc_time_hash.entry(encrypt_time).or_insert(0) += 1;
@@ -117,9 +119,12 @@ fn main() {
     // Read message from file json.txt
     let message = std::fs::read("json.txt").expect("Unable to read file");
 
-    
+    let start = Instant::now();
 
     test_ntru( &message, nkeys, nloops);
+
+    let total_time = start.elapsed().as_micros();
+    println!("Total time: {} microseconds", total_time);
    
 }
 
