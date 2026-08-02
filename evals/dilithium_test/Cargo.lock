@@ -48,9 +48,9 @@ dependencies = [
 
 [[package]]
 name = "dilithium-rs"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b0aa9ae3a1b700e0ac9f707cdff5c3893f4f11a3b1b317c5113a422ef785809"
+checksum = "c09140eac68695dc231ee49f0eab36ee6d19479e9eafaf9cd1136e9aa36346a6"
 dependencies = [
  "getrandom",
  "sha2",
