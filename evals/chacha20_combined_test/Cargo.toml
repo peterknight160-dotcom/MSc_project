@@ -1,0 +1,11 @@
+[package]
+name = "chacha20_combined_test"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+chacha20 = { version = "0.10.1", features = ["cipher"] }
+env = "1.0.1"
+useful_stats = { path = "../useful_stats" }
+rand = "0.10.2"
+hostname = "0.4.1"
