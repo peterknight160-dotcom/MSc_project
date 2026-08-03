@@ -17,7 +17,7 @@ const PERCENTILE_TO_CALC: [u32; 15] = [1,2,5,10,20,30,40,50,60,70,80,90, 95,98, 
 
 impl Display for StatsResult {
     fn fmt (&self, f: &mut Formatter ) -> fmt::Result {
-        let _ = write! ( f, "For {}:: elements: {}  mean: {:.2} std_dev: {:.2}", self.legend, self.elements, self.mean , self.std_dev);
+        let _ = write! ( f, " {}:: elements: {}  mean: {:.2} std_dev: {:.2}", self.legend, self.elements, self.mean , self.std_dev);
         writeln!(f, " Minimum: {} ,  maximum: {} ,  percentiles: {:?}    ", self.minimum, self.maximum, self.percentiles)
     }
 }
