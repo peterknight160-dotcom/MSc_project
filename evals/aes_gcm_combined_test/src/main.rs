@@ -55,7 +55,7 @@ fn test_ntru( message: &[u8], nkeys: u32, nloops: u32) -> Option<bool> {
 
     let mut dec_time_hash: BTreeMap<u128, u32> = BTreeMap::new();
     let mut enc_time_hash: BTreeMap<u128, u32> = BTreeMap::new();
-    let _padding = Some("PKCS7");
+    let aes_gcmpadding = Some("PKCS7");
     
     
     // Get hostname
@@ -76,12 +76,12 @@ fn test_ntru( message: &[u8], nkeys: u32, nloops: u32) -> Option<bool> {
             let nonce = Nonce::generate();
             let start_encrypt = Instant::now();
             let ciphertext = cipher.encrypt(&nonce, message).expect("Encryption failed");
-            let encrypt_time = start_encrypt.elapsed().as_micros();
+            let encrypt_time = start_encrypt.elapsed().as_nanos();
             
             *enc_time_hash.entry(encrypt_time).or_insert(0) += 1;
             let start_decrypt = Instant::now();
             let _plaintext = cipher.decrypt(&nonce, ciphertext.as_ref()).expect("Decryption failed");
-            let decrypt_time = start_decrypt.elapsed().as_micros();
+            let decrypt_time = start_decrypt.elapsed().as_nanos();
             *dec_time_hash.entry(decrypt_time).or_insert(0) += 1;
            
         }
